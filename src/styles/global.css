@@ -1,0 +1,124 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --sidebar-width: 240px;
+  --sidebar: #111111;
+  --sidebar-text: #888;
+  --bg: #f5f3ee;
+  --white: #ffffff;
+  --charcoal: #1a1a1a;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Jost', sans-serif;
+  background: var(--bg);
+  color: var(--charcoal);
+}
+
+img { display: block; }
+button { cursor: pointer; font-family: 'Jost', sans-serif; }
+a { text-decoration: none; color: inherit; }
+
+/* ── Card ── */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e8e5e0;
+  padding: 24px;
+}
+
+/* ── Form Elements ── */
+.field-label {
+  font-family: 'Jost', sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #999;
+}
+.field-input {
+  padding: 10px 14px;
+  border: 1px solid #e0ddd8;
+  border-radius: 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 14px; color: #1a1a1a;
+  background: #fafafa; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  width: 100%;
+}
+.field-input:focus { border-color: #1a1a1a; background: #fff; }
+
+select.field-input {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px;
+  background: #1a1a1a; color: #fff; border: none;
+  border-radius: 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.06em;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-primary:hover { background: #333; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px;
+  background: transparent; color: #888;
+  border: 1px solid #e0ddd8; border-radius: 10px;
+  font-family: 'Jost', sans-serif;
+  font-size: 13px; font-weight: 400;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: #999; color: #333; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-block; padding: 3px 12px;
+  border-radius: 100px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.04em; text-transform: capitalize;
+}
+.badge-green { background: #d4f5e2; color: #2d6a4f; }
+.badge-gold  { background: #fff3cd; color: #856404; }
+.badge-gray  { background: #f0f0f0; color: #888; }
+
+/* ── Page Header (shared) ── */
+.page-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 28px;
+}
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px;
+}
+.page-sub { font-size: 13px; color: #999; font-weight: 300; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1a1a1a; color: #fff;
+  padding: 12px 28px; border-radius: 12px;
+  font-size: 13px; font-weight: 400;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 9999;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: #1a1a1a; }
+.toast.error   { background: #c0392b; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
