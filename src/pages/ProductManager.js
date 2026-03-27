@@ -61,10 +61,13 @@ export default function ProductManager() {
       showToast('Cloudinary widget not loaded', 'error');
       return;
     }
+     const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+     const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
+
     window.cloudinary.openUploadWidget(
       {
-        cloudName:    'dy2mutnk6',   // ← Replace
-        uploadPreset: 'aurelia_upload',       // ← Replace
+        cloudName:    cloudName,   
+        uploadPreset: uploadPreset,       
         sources: ['local', 'url', 'camera'],
         multiple: false,
         maxFileSize: 5000000,
