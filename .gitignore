@@ -2,6 +2,7 @@
 .env
 
 # Node dependencies
+node_moddules
 node_modules/
 
 # Build files
@@ -18,6 +19,7 @@ yarn-error.log*
 Thumbs.db
 
 # Python virtual environment (if used)
+venv
 venv/
 __pycache__/
 *.pyc
