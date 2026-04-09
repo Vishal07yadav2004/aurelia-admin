@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import ProductManager from './pages/ProductManager';
 import CategoryManager from './pages/CategoryManager';
+import ContentManager from './pages/ContentManager';
 import OrdersPage from './pages/OrdersPage';
 import './styles/global.css';
 
@@ -21,20 +22,29 @@ export default function App() {
     setTimeout(() => setToast(t => ({ ...t, show: false })), 3000);
   };
 
-  if (!loggedIn) return <LoginPage onLogin={() => { localStorage.setItem('aurelia_admin','true'); setLoggedIn(true); }} />;
+  if (!loggedIn) return (
+    <LoginPage onLogin={() => {
+      localStorage.setItem('aurelia_admin', 'true');
+      setLoggedIn(true);
+    }} />
+  );
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       <BrowserRouter>
-        <div style={{ display:'flex', minHeight:'100vh' }}>
-          <Sidebar onLogout={() => { localStorage.removeItem('aurelia_admin'); setLoggedIn(false); }} />
-          <main style={{ marginLeft: 'var(--sidebar-width)', flex:1, padding:'32px', maxWidth:'calc(100vw - 240px)', overflowX:'hidden' }}>
+        <div className="app-shell">
+          <Sidebar onLogout={() => {
+            localStorage.removeItem('aurelia_admin');
+            setLoggedIn(false);
+          }} />
+          <main className="app-main">
             <Routes>
-              <Route path="/"          element={<Navigate to="/dashboard" />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/products"  element={<ProductManager />} />
-              <Route path="/categories"element={<CategoryManager />} />
-              <Route path="/orders"    element={<OrdersPage />} />
+              <Route path="/"           element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard"  element={<Dashboard />} />
+              <Route path="/products"   element={<ProductManager />} />
+              <Route path="/categories" element={<CategoryManager />} />
+              <Route path="/content"    element={<ContentManager />} />
+              <Route path="/orders"     element={<OrdersPage />} />
             </Routes>
           </main>
         </div>

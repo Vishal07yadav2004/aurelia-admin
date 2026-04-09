@@ -2,7 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { db } from '../firebase/config';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { ToastContext } from '../App';
-import { Upload, Trash2, Plus, X } from 'lucide-react';
+import { Trash2, Plus, X } from 'lucide-react';
+import ImageDropzone from '../components/ImageDropzone';
 import './CategoryManager.css';
 
 const DEFAULT_ROWS = {
@@ -42,42 +43,28 @@ export default function CategoryManager() {
     return () => unsubs.forEach(u => u());
   }, []);
 
-  // ── Save helper ──
   const saveRow = async (docId, items) => {
     setRows(r => ({ ...r, [docId]: items }));
     await setDoc(doc(db, 'site', docId), { items });
   };
 
-  // ── ADD ──
   const handleAdd = async () => {
-    if (!newCat.label.trim()) {
-      showToast('Enter a category name', 'error');
-      return;
-    }
-
+    if (!newCat.label.trim()) { showToast('Enter a category name', 'error'); return; }
     const id = newCat.label.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-
     const allItems = [...(rows.categories_row1 || []), ...(rows.categories_row2 || [])];
-    if (allItems.find(c => c.id === id)) {
-      showToast('A category with this ID already exists', 'error');
-      return;
-    }
+    if (allItems.find(c => c.id === id)) { showToast('A category with this ID already exists', 'error'); return; }
 
     const newItem = {
       id,
       label: newCat.label.trim(),
       image: newCat.image || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&q=80',
     };
-
-    const targetItems = [...(rows[newCat.targetRow] || []), newItem];
-    await saveRow(newCat.targetRow, targetItems);
-
+    await saveRow(newCat.targetRow, [...(rows[newCat.targetRow] || []), newItem]);
     setNewCat(EMPTY_NEW);
     setShowAdd(false);
     showToast('Category added — live on client! 🚀');
   };
 
-  // ── UPDATE LABEL ──
   const updateLabel = async (docId, idx, newLabel) => {
     if (!newLabel.trim()) return;
     const updated = [...rows[docId]];
@@ -86,7 +73,6 @@ export default function CategoryManager() {
     showToast('Label updated ✓');
   };
 
-  // ── UPDATE IMAGE ──
   const updateImage = async (docId, idx, newUrl) => {
     if (!newUrl) return;
     const updated = [...rows[docId]];
@@ -95,38 +81,15 @@ export default function CategoryManager() {
     showToast('Image updated ✓');
   };
 
-  // ── DELETE ──
   const deleteCategory = async (docId, idx) => {
     const cat = rows[docId][idx];
     if (!window.confirm(`Delete "${cat.label}"?`)) return;
-    const updated = rows[docId].filter((_, i) => i !== idx);
-    await saveRow(docId, updated);
+    await saveRow(docId, rows[docId].filter((_, i) => i !== idx));
     showToast('Category removed');
-  };
-
-  // ── CLOUDINARY ──
-  const openCloudinary = (callback) => {
-    if (!window.cloudinary) { showToast('Cloudinary widget not loaded', 'error'); return; }
-     const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
-     const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
-    window.cloudinary.openUploadWidget(
-      {
-        cloudName:    cloudName,   
-        uploadPreset: uploadPreset,       
-        sources: ['local', 'url', 'camera'],
-        multiple: false,
-        folder: 'aurelia-categories',
-      },
-      (error, result) => {
-        if (!error && result?.event === 'success') callback(result.info.secure_url);
-      }
-    );
   };
 
   return (
     <div className="cat-manager">
-
-      {/* HEADER */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Categories</h1>
@@ -142,12 +105,13 @@ export default function CategoryManager() {
         <div className="card cat-add-card">
           <h3 className="form-title"><Plus size={17}/> New Category</h3>
           <div className="cat-add-layout">
-            <div className="cat-add-preview">
-              {newCat.image
-                ? <img src={newCat.image} alt="Preview"/>
-                : <div className="cat-add-placeholder"><Upload size={28} color="#ccc"/><span>No image</span></div>
-              }
-            </div>
+            {/* Image dropzone */}
+            <ImageDropzone
+              value={newCat.image}
+              onChange={url => setNewCat({ ...newCat, image: url })}
+              folder="aurelia-categories"
+            />
+
             <div className="cat-add-fields">
               <div className="form-field">
                 <label className="field-label">Category Name</label>
@@ -167,26 +131,17 @@ export default function CategoryManager() {
                   <option value="categories_row2">Row 2 — More</option>
                 </select>
               </div>
-              <div className="form-field">
-                <label className="field-label">Image</label>
-                <div className="cat-image-options">
-                  <button type="button" className="upload-cloudinary-btn"
-                    onClick={() => openCloudinary(url => setNewCat({...newCat, image: url}))}>
-                    <Upload size={14}/> Upload
-                  </button>
-                  <input className="field-input" placeholder="or paste image URL"
-                    value={newCat.image} onChange={e => setNewCat({...newCat, image: e.target.value})}/>
-                </div>
-              </div>
-              <button className="btn-primary" type="button" onClick={handleAdd}>Add Category</button>
+              <button className="btn-primary" type="button" onClick={handleAdd} style={{ marginTop: 4 }}>
+                Add Category
+              </button>
             </div>
           </div>
         </div>
       )}
 
       <p className="cat-note">
-        💡 First 4 per row show on the homepage grid. All categories appear as Shop page filters. 
-        The <strong>ID</strong> is permanent — it links products to this category. 
+        💡 First 4 per row show on the homepage grid. All categories appear as Shop page filters.
+        The <strong>ID</strong> is permanent — it links products to this category.
         You can freely rename the <strong>label</strong>.
       </p>
 
@@ -202,15 +157,12 @@ export default function CategoryManager() {
           <div className="cat-tiles">
             {(rows[key] || []).map((cat, idx) => (
               <div className="cat-tile card" key={`${cat.id}-${idx}`}>
-
-                {/* Image */}
-                <div className="cat-tile-img">
-                  <img src={cat.image} alt={cat.label}/>
-                  <button className="cat-upload-btn"
-                    onClick={() => openCloudinary(url => updateImage(key, idx, url))}>
-                    <Upload size={13}/> Upload
-                  </button>
-                </div>
+                {/* Drag & Drop image per tile */}
+                <ImageDropzone
+                  value={cat.image}
+                  onChange={url => updateImage(key, idx, url)}
+                  folder="aurelia-categories"
+                />
 
                 {/* Editable label */}
                 <input
@@ -227,19 +179,6 @@ export default function CategoryManager() {
 
                 {/* ID badge */}
                 <span className="cat-id-badge">id: {cat.id}</span>
-
-                {/* Image URL */}
-                <input
-                  className="field-input cat-url-input"
-                  placeholder="Image URL"
-                  defaultValue={cat.image}
-                  key={`img-${cat.id}-${cat.image}`}
-                  onBlur={e => {
-                    if (e.target.value && e.target.value !== cat.image) {
-                      updateImage(key, idx, e.target.value);
-                    }
-                  }}
-                />
 
                 {/* Delete */}
                 <button className="cat-delete-btn" onClick={() => deleteCategory(key, idx)}>

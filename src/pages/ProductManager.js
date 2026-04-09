@@ -4,17 +4,16 @@ import {
   collection, addDoc, updateDoc, deleteDoc, doc,
   onSnapshot, orderBy, query, serverTimestamp
 } from 'firebase/firestore';
-import { Trash2, Upload, Plus, Pencil, Package } from 'lucide-react';
+import { Trash2, Plus, Pencil, Package } from 'lucide-react';
 import { ToastContext } from '../App';
+import ImageDropzone from '../components/ImageDropzone';
 import './ProductManager.css';
 
 const FALLBACK_CATS = ['rings','necklaces','earrings','bracelets','watches','anklets','charms','pendants'];
-
 const SECTIONS = [
   { value: 'bestSellers', label: 'Best Sellers' },
   { value: 'newArrivals', label: 'New Arrivals' },
 ];
-
 const EMPTY = { name: '', price: '', category: '', section: 'bestSellers', image: '' };
 
 export default function ProductManager() {
@@ -38,7 +37,6 @@ export default function ProductManager() {
   // ── Dynamic categories from Firestore ──
   useEffect(() => {
     const allCats = { row1: [], row2: [] };
-
     const u1 = onSnapshot(doc(db, 'site', 'categories_row1'), s => {
       if (s.exists() && s.data().items) {
         allCats.row1 = s.data().items.map(c => ({ id: c.id, label: c.label }));
@@ -51,38 +49,8 @@ export default function ProductManager() {
         setCategories([...allCats.row1, ...allCats.row2]);
       }
     });
-
     return () => { u1(); u2(); };
   }, []);
-
-  // ── Cloudinary Upload ──
-  const openCloudinary = () => {
-    if (!window.cloudinary) {
-      showToast('Cloudinary widget not loaded', 'error');
-      return;
-    }
-     const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
-     const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
-
-    window.cloudinary.openUploadWidget(
-      {
-        cloudName:    cloudName,   
-        uploadPreset: uploadPreset,       
-        sources: ['local', 'url', 'camera'],
-        multiple: false,
-        maxFileSize: 5000000,
-        folder: 'aurelia-products',
-        cropping: true,
-        croppingAspectRatio: 1,
-      },
-      (error, result) => {
-        if (!error && result?.event === 'success') {
-          setForm(f => ({ ...f, image: result.info.secure_url }));
-          showToast('Image uploaded ✓');
-        }
-      }
-    );
-  };
 
   // ── Submit ──
   const handleSubmit = async (e) => {
@@ -91,7 +59,6 @@ export default function ProductManager() {
       showToast('Fill all fields and select a category', 'error');
       return;
     }
-
     setLoading(true);
     try {
       const productData = {
@@ -101,7 +68,6 @@ export default function ProductManager() {
         section:  form.section,
         image:    form.image,
       };
-
       if (editId) {
         await updateDoc(doc(db, 'products', editId), productData);
         showToast('Product updated ✓');
@@ -114,7 +80,7 @@ export default function ProductManager() {
         showToast('Product added — live on client! 🚀');
       }
       setForm(EMPTY);
-    } catch (err) {
+    } catch {
       showToast('Error saving product', 'error');
     }
     setLoading(false);
@@ -141,11 +107,8 @@ export default function ProductManager() {
 
   const cancelEdit = () => { setEditId(null); setForm(EMPTY); };
 
-  const filtered = filter === 'all'
-    ? products
-    : products.filter(p => p.section === filter);
+  const filtered = filter === 'all' ? products : products.filter(p => p.section === filter);
 
-  // Dropdown items: prefer Firestore, fallback to hardcoded
   const catOptions = categories.length > 0
     ? categories
     : FALLBACK_CATS.map(c => ({ id: c, label: c.charAt(0).toUpperCase() + c.slice(1) }));
@@ -199,37 +162,24 @@ export default function ProductManager() {
             </div>
           </div>
 
-          {/* IMAGE */}
+          {/* ── DRAG & DROP IMAGE ── */}
           <div className="image-section">
-            <label className="field-label">Product Image</label>
-            <div className="image-options">
-              <button type="button" className="upload-cloudinary-btn" onClick={openCloudinary}>
-                <Upload size={15} /> Upload Image
-              </button>
-              <span className="or-divider">OR</span>
-              <input className="field-input url-input" placeholder="Paste image URL here..."
-                value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
-            </div>
-            {form.image && (
-              <div className="image-preview">
-                <img src={form.image} alt="Preview" />
-                <button type="button" className="remove-preview"
-                  onClick={() => setForm({...form, image: ''})}>✕</button>
-                <span className="preview-label">Preview</span>
-              </div>
-            )}
+            <ImageDropzone
+              label="Product Image"
+              value={form.image}
+              onChange={url => setForm({ ...form, image: url })}
+              folder="aurelia-products"
+            />
           </div>
 
           <div className="form-actions">
             <button className="btn-primary" type="submit" disabled={loading}>
               {loading ? 'Saving...' : editId ? 'Update Product' : 'Add Product'}
             </button>
-            {editId && (
-              <button className="btn-secondary" type="button" onClick={cancelEdit}>Cancel Edit</button>
-            )}
-            {!editId && (
-              <button className="btn-secondary" type="button" onClick={() => setForm(EMPTY)}>Clear</button>
-            )}
+            {editId
+              ? <button className="btn-secondary" type="button" onClick={cancelEdit}>Cancel Edit</button>
+              : <button className="btn-secondary" type="button" onClick={() => setForm(EMPTY)}>Clear</button>
+            }
           </div>
         </form>
       </div>
@@ -240,7 +190,7 @@ export default function ProductManager() {
           <h3 className="section-heading">All Products</h3>
           <div className="filter-tabs">
             {[
-              { key:'all', label:'All' },
+              { key:'all',         label:'All'         },
               { key:'bestSellers', label:'Best Sellers' },
               { key:'newArrivals', label:'New Arrivals' },
             ].map(f => (
