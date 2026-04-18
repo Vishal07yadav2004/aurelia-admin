@@ -108,7 +108,7 @@ export default function FooterManager() {
       <div className="card footer-card">
         <h3 className="section-heading" style={{marginBottom:14}}>Footer Preview</h3>
         <div className="footer-preview">
-          <div className="fp-brand">AURELIA</div>
+          <div className="fp-brand">Kanyamaa Collections</div>
           <div className="fp-socials">
             {socials.filter(s => s.label).map((s,i) => (
               <span key={i} className="fp-link">{s.label}</span>

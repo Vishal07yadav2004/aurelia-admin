@@ -32,7 +32,7 @@ export default function Sidebar({ onLogout }) {
       {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
       <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-logo">
-          <span className="logo-text">AURELIA</span>
+          <span className="logo-text">Kanyamaa Collections</span>
           <span className="logo-tag">Admin</span>
         </div>
         <nav className="sidebar-nav">
