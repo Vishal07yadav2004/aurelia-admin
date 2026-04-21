@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import './LoginPage.css';
 
-// Simple hardcoded credentials — change these to whatever you want
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'aurelia2024';
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import app from '../firebase/config'; // adjust path if needed
+
+const auth = getAuth(app);
 
 export default function LoginPage({ onLogin }) {
   const [user, setUser]  = useState('');
@@ -11,17 +12,19 @@ export default function LoginPage({ onLogin }) {
   const [err, setErr]    = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      if (user === ADMIN_USER && pass === ADMIN_PASS) {
-        onLogin();
-      } else {
-        setErr('Invalid username or password');
-        setLoading(false);
-      }
-    }, 600);
+    setErr('');
+
+    try {
+      await signInWithEmailAndPassword(auth, user, pass);
+      onLogin(); // ✅ success
+    } catch (error) {
+      setErr('Invalid email or password');
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -32,16 +35,17 @@ export default function LoginPage({ onLogin }) {
 
         <form onSubmit={handleLogin} className="login-form">
           <div className="login-field">
-            <label className="field-label">Username</label>
+            <label className="field-label">Email</label>
             <input
               className="field-input"
-              type="text"
+              type="email"
               value={user}
               onChange={e => { setUser(e.target.value); setErr(''); }}
-              placeholder="admin"
+              placeholder="admin@aurelia.com"
               autoFocus
             />
           </div>
+
           <div className="login-field">
             <label className="field-label">Password</label>
             <input
@@ -52,13 +56,13 @@ export default function LoginPage({ onLogin }) {
               placeholder="••••••••"
             />
           </div>
+
           {err && <p className="login-err">{err}</p>}
+
           <button className="btn-primary login-btn" type="submit" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <p className="login-hint">Default: admin / aurelia2024</p>
       </div>
     </div>
   );
