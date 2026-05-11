@@ -1,0 +1,42 @@
+.sale-banner-manager { max-width: 700px; }
+.sbm-card { margin-bottom: 20px; }
+.sbm-info-card { margin-bottom: 20px; background: #fafaf8; }
+.sbm-info-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.sbm-info-list li { font-family: 'Jost', sans-serif; font-size: 13px; color: #555; line-height: 1.6; padding-left: 16px; position: relative; }
+.sbm-info-list li::before { content: '→'; position: absolute; left: 0; color: #aaa; }
+
+/* Preview bar */
+.sbm-preview-bar {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 10px 5vw; margin-bottom: 16px;
+  border-radius: 10px; font-family: 'Jost', sans-serif;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.06em;
+  animation: slideDown 0.3s ease;
+}
+@keyframes slideDown { from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);} }
+.sbm-preview-cta { opacity: 0.75; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; border-bottom: 1px solid currentColor; }
+
+/* Toggle */
+.sbm-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.sbm-toggle-label { font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+.sbm-toggle-sub   { font-family: 'Jost', sans-serif; font-size: 12px; color: #888; }
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: #ccc; border-radius: 100px; cursor: pointer;
+  transition: background 0.3s;
+}
+.toggle-track::before {
+  content: ''; position: absolute; height: 18px; width: 18px;
+  left: 3px; bottom: 3px; background: white;
+  border-radius: 50%; transition: transform 0.3s;
+}
+.toggle-switch input:checked + .toggle-track { background: #2d6a4f; }
+.toggle-switch input:checked + .toggle-track::before { transform: translateX(20px); }
+
+/* Color presets */
+.sbm-presets { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.sbm-preset-btn { width: 36px; height: 36px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+.sbm-preset-btn:hover { transform: scale(1.12); }
+.sbm-preset-btn.active { border-color: #1a1a1a; transform: scale(1.1); }
+.form-hint { font-family: 'Jost', sans-serif; font-size: 11px; color: #aaa; margin-top: 5px; font-style: italic; }

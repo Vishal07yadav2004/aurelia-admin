@@ -9,21 +9,23 @@ import CarouselManager from './pages/CarouselManager';
 import ContentManager from './pages/ContentManager';
 import OrdersPage from './pages/OrdersPage';
 import FooterManager from './pages/FooterManager';
+import SaleBannerManager from './pages/SaleBannerManager';
+//import SubCategoryManager from './pages/SubCategoryManager';
 import './styles/global.css';
 
 export const ToastContext = React.createContext();
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(localStorage.getItem('aurelia_admin') === 'true');
-  const [toast, setToast] = useState({ show:false, msg:'', type:'success' });
+  const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
 
   const showToast = (msg, type = 'success') => {
-    setToast({ show:true, msg, type });
-    setTimeout(() => setToast(t => ({ ...t, show:false })), 3000);
+    setToast({ show: true, msg, type });
+    setTimeout(() => setToast(t => ({ ...t, show: false })), 3000);
   };
 
   if (!loggedIn) return (
-    <LoginPage onLogin={() => { localStorage.setItem('aurelia_admin','true'); setLoggedIn(true); }} />
+    <LoginPage onLogin={() => { localStorage.setItem('aurelia_admin', 'true'); setLoggedIn(true); }} />
   );
 
   return (
@@ -33,14 +35,16 @@ export default function App() {
           <Sidebar onLogout={() => { localStorage.removeItem('aurelia_admin'); setLoggedIn(false); }} />
           <main className="app-main">
             <Routes>
-              <Route path="/"           element={<Navigate to="/dashboard" />} />
-              <Route path="/dashboard"  element={<Dashboard />} />
-              <Route path="/products"   element={<ProductManager />} />
-              <Route path="/categories" element={<CategoryManager />} />
-              <Route path="/carousel"   element={<CarouselManager />} />
-              <Route path="/content"    element={<ContentManager />} />
-              <Route path="/orders"     element={<OrdersPage />} />
-              <Route path="/footer"     element={<FooterManager />} />
+              <Route path="/"            element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard"   element={<Dashboard />} />
+              <Route path="/products"    element={<ProductManager />} />
+              <Route path="/categories"  element={<CategoryManager />} />
+              {/* <Route path="/subcategories" element={<SubCategoryManager />} /> */}
+              <Route path="/carousel"    element={<CarouselManager />} />
+              <Route path="/content"     element={<ContentManager />} />
+              <Route path="/orders"      element={<OrdersPage />} />
+              <Route path="/footer"      element={<FooterManager />} />
+              <Route path="/sale-banner" element={<SaleBannerManager />} />
             </Routes>
           </main>
         </div>
