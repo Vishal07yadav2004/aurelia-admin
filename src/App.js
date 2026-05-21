@@ -10,7 +10,8 @@ import ContentManager from './pages/ContentManager';
 import OrdersPage from './pages/OrdersPage';
 import FooterManager from './pages/FooterManager';
 import SaleBannerManager from './pages/SaleBannerManager';
-//import SubCategoryManager from './pages/SubCategoryManager';
+import HeroManager from './pages/HeroManager';
+import CouponManager from './pages/CouponManager';
 import './styles/global.css';
 
 export const ToastContext = React.createContext();
@@ -39,12 +40,13 @@ export default function App() {
               <Route path="/dashboard"   element={<Dashboard />} />
               <Route path="/products"    element={<ProductManager />} />
               <Route path="/categories"  element={<CategoryManager />} />
-              {/* <Route path="/subcategories" element={<SubCategoryManager />} /> */}
               <Route path="/carousel"    element={<CarouselManager />} />
+              <Route path="/hero"        element={<HeroManager />} />
               <Route path="/content"     element={<ContentManager />} />
               <Route path="/orders"      element={<OrdersPage />} />
               <Route path="/footer"      element={<FooterManager />} />
               <Route path="/sale-banner" element={<SaleBannerManager />} />
+              <Route path="/coupons"     element={<CouponManager />} />
             </Routes>
           </main>
         </div>

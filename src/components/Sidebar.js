@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, Image, Play, FileText, ShoppingBag, Link, Tag, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Image, Play, FileText, ShoppingBag, Link, Tag, LogOut, Monitor, Ticket } from 'lucide-react';
+//import { LayoutDashboard, Package, Image, Play, FileText, ShoppingBag, Link, Tag, LogOut, Monitor } from 'lucide-react';
 import './Sidebar.css';
 
 const NAV = [
@@ -8,6 +9,8 @@ const NAV = [
   { to:'/products',     icon:Package,          label:'Products'       },
   { to:'/categories',   icon:Image,            label:'Categories'     },
   { to:'/carousel',     icon:Play,             label:'Carousel'       },
+  { to:'/hero',         icon:Monitor,          label:'Hero Section'   },
+  { to:'/coupons',     icon:Ticket,           label:'Coupons'        },
   { to:'/sale-banner',  icon:Tag,              label:'Sale Banner'    },
   { to:'/content',      icon:FileText,         label:'Content'        },
   { to:'/orders',       icon:ShoppingBag,      label:'Orders'         },
