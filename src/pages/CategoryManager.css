@@ -16,26 +16,8 @@
   gap: 24px; align-items: flex-start;
 }
 
-.cat-add-preview {
-  width: 180px; height: 140px;
-  border-radius: 12px; overflow: hidden;
-  background: #f5f3ee;
-}
-.cat-add-preview img { width: 100%; height: 100%; object-fit: cover; }
-
-.cat-add-placeholder {
-  width: 100%; height: 100%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 6px; font-size: 12px; color: #ccc;
-}
-
 .cat-add-fields {
   display: flex; flex-direction: column; gap: 14px;
-}
-
-.cat-image-options {
-  display: flex; gap: 10px; align-items: center;
 }
 
 .cat-id-hint {
@@ -64,40 +46,79 @@
   font-size: 13px; font-weight: 400; color: #aaa;
 }
 
-/* ── Tiles ── */
+/* ── Tiles Grid ── */
 .cat-tiles {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+.cat-tiles-dragging .cat-tile {
+  transition: transform 0.2s, opacity 0.2s;
+}
 
+/* ── Individual Tile ── */
 .cat-tile {
   display: flex; flex-direction: column; gap: 10px;
   padding: 14px;
+  position: relative;
+  cursor: grab;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.cat-tile:active { cursor: grabbing; }
+.cat-tile:hover { border-color: #ccc; }
+
+/* Dragging state */
+.cat-tile[draggable="true"]:active {
+  opacity: 0.7;
+  transform: scale(0.97);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
 }
 
-.cat-tile-img {
-  position: relative; height: 140px;
-  border-radius: 10px; overflow: hidden;
+/* Drag handle */
+.cat-drag-handle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  color: #ccc;
+  cursor: grab;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cat-drag-handle:hover {
+  color: #666;
   background: #f0ece6;
 }
-.cat-tile-img img { width: 100%; height: 100%; object-fit: cover; }
+.cat-drag-handle:active { cursor: grabbing; }
 
-.cat-upload-btn {
-  position: absolute; bottom: 8px; left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.75); color: #fff; border: none;
+/* Drop zone at end of row */
+.cat-tile-dropzone {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #d0ccc5;
+  border-radius: 14px;
+  min-height: 120px;
+  color: #bbb;
   font-family: 'Jost', sans-serif;
-  font-size: 11px; font-weight: 500;
-  padding: 7px 16px; border-radius: 100px;
-  cursor: pointer;
-  display: flex; align-items: center; gap: 6px;
-  white-space: nowrap; opacity: 0;
-  transition: opacity 0.2s, background 0.2s;
+  font-size: 12px;
+  transition: border-color 0.2s, background 0.2s;
 }
-.cat-tile-img:hover .cat-upload-btn { opacity: 1; }
-.cat-upload-btn:hover { background: rgba(0,0,0,0.9); }
+.cat-tiles-dragging .cat-tile-dropzone {
+  display: flex;
+}
+.cat-tile-dropzone:hover {
+  border-color: #1a1a1a;
+  background: #f9f7f3;
+  color: #666;
+}
 
+/* Label input */
 .cat-label-input {
   font-family: 'Jost', sans-serif;
   font-size: 15px; font-weight: 500; color: #1a1a1a;
@@ -112,6 +133,7 @@
   border-bottom-style: solid;
 }
 
+/* ID badge */
 .cat-id-badge {
   font-family: monospace;
   font-size: 10px; color: #aaa;
@@ -121,11 +143,7 @@
   align-self: center;
 }
 
-.cat-url-input {
-  font-size: 11px !important;
-  padding: 7px 10px !important;
-}
-
+/* Delete button */
 .cat-delete-btn {
   display: flex; align-items: center; justify-content: center;
   gap: 6px; background: none;
@@ -139,22 +157,9 @@
   background: #fff0ee; border-color: #e74c3c; color: #e74c3c;
 }
 
-.upload-cloudinary-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 16px;
-  background: #1a1a1a; color: #fff; border: none;
-  border-radius: 8px;
-  font-family: 'Jost', sans-serif;
-  font-size: 12px; font-weight: 500;
-  cursor: pointer; white-space: nowrap;
-  transition: background 0.2s;
-}
-.upload-cloudinary-btn:hover { background: #333; }
-
 .form-field { display: flex; flex-direction: column; gap: 7px; }
 
 @media (max-width: 900px) {
   .cat-tiles { grid-template-columns: repeat(2, 1fr); }
   .cat-add-layout { grid-template-columns: 1fr; }
-  .cat-image-options { flex-direction: column; }
 }

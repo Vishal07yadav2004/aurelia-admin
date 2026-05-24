@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { db } from '../firebase/config';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { ToastContext } from '../App';
-import { Trash2, Plus, X } from 'lucide-react';
+import { Trash2, Plus, X, GripVertical } from 'lucide-react';
 import ImageDropzone from '../components/ImageDropzone';
 import './CategoryManager.css';
 
@@ -29,6 +29,11 @@ export default function CategoryManager() {
   const [showAdd, setShowAdd] = useState(false);
   const [newCat, setNewCat]   = useState(EMPTY_NEW);
 
+  // Drag state
+  const dragItem = useRef(null);
+  const dragOverItem = useRef(null);
+  const [dragging, setDragging] = useState(false);
+
   useEffect(() => {
     const unsubs = [];
     Object.keys(DEFAULT_ROWS).forEach(docId => {
@@ -46,6 +51,14 @@ export default function CategoryManager() {
   const saveRow = async (docId, items) => {
     setRows(r => ({ ...r, [docId]: items }));
     await setDoc(doc(db, 'site', docId), { items });
+  };
+
+  const saveBothRows = async (newRows) => {
+    setRows(newRows);
+    await Promise.all([
+      setDoc(doc(db, 'site', 'categories_row1'), { items: newRows.categories_row1 }),
+      setDoc(doc(db, 'site', 'categories_row2'), { items: newRows.categories_row2 }),
+    ]);
   };
 
   const handleAdd = async () => {
@@ -88,12 +101,76 @@ export default function CategoryManager() {
     showToast('Category removed');
   };
 
+  // ── DRAG & DROP ──
+  const handleDragStart = (e, rowId, idx) => {
+    dragItem.current = { rowId, idx };
+    setDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+    // Ghost image
+    if (e.target.closest) {
+      const tile = e.target.closest('.cat-tile');
+      if (tile) {
+        e.dataTransfer.setDragImage(tile, 80, 60);
+      }
+    }
+  };
+
+  const handleDragEnter = (e, rowId, idx) => {
+    e.preventDefault();
+    dragOverItem.current = { rowId, idx };
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setDragging(false);
+
+    if (!dragItem.current || !dragOverItem.current) return;
+
+    const from = dragItem.current;
+    const to = dragOverItem.current;
+
+    // Same position — nothing to do
+    if (from.rowId === to.rowId && from.idx === to.idx) {
+      dragItem.current = null;
+      dragOverItem.current = null;
+      return;
+    }
+
+    const newRows = {
+      categories_row1: [...rows.categories_row1],
+      categories_row2: [...rows.categories_row2],
+    };
+
+    // Remove item from source
+    const [movedItem] = newRows[from.rowId].splice(from.idx, 1);
+
+    // Insert into target
+    newRows[to.rowId].splice(to.idx, 0, movedItem);
+
+    await saveBothRows(newRows);
+    showToast('Categories reordered ✓');
+
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
+  const handleDragEnd = () => {
+    setDragging(false);
+    dragItem.current = null;
+    dragOverItem.current = null;
+  };
+
   return (
     <div className="cat-manager">
       <div className="page-header">
         <div>
           <h1 className="page-title">Categories</h1>
-          <p className="page-sub">Add, rename, or remove categories. Changes are live instantly.</p>
+          <p className="page-sub">Add, rename, or remove categories. Drag to reorder — changes are live instantly.</p>
         </div>
         <button className="btn-primary" onClick={() => setShowAdd(!showAdd)}>
           {showAdd ? <><X size={15}/> Cancel</> : <><Plus size={15}/> Add Category</>}
@@ -105,13 +182,11 @@ export default function CategoryManager() {
         <div className="card cat-add-card">
           <h3 className="form-title"><Plus size={17}/> New Category</h3>
           <div className="cat-add-layout">
-            {/* Image dropzone */}
             <ImageDropzone
               value={newCat.image}
               onChange={url => setNewCat({ ...newCat, image: url })}
               folder="aurelia-categories"
             />
-
             <div className="cat-add-fields">
               <div className="form-field">
                 <label className="field-label">Category Name</label>
@@ -143,6 +218,8 @@ export default function CategoryManager() {
         💡 First 4 per row show on the homepage grid. All categories appear as Shop page filters.
         The <strong>ID</strong> is permanent — it links products to this category.
         You can freely rename the <strong>label</strong>.
+        <br/><br/>
+        🖐️ <strong>Drag & drop</strong> tiles to reorder within a row or move between rows.
       </p>
 
       {/* ── ROWS ── */}
@@ -154,10 +231,24 @@ export default function CategoryManager() {
           <h3 className="section-heading">
             {title} <span className="cat-count">({(rows[key]||[]).length})</span>
           </h3>
-          <div className="cat-tiles">
+          <div className={`cat-tiles ${dragging ? 'cat-tiles-dragging' : ''}`}>
             {(rows[key] || []).map((cat, idx) => (
-              <div className="cat-tile card" key={`${cat.id}-${idx}`}>
-                {/* Drag & Drop image per tile */}
+              <div
+                className="cat-tile card"
+                key={`${cat.id}-${idx}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, key, idx)}
+                onDragEnter={(e) => handleDragEnter(e, key, idx)}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+              >
+                {/* Drag handle */}
+                <div className="cat-drag-handle" title="Drag to reorder">
+                  <GripVertical size={16} />
+                </div>
+
+                {/* Image */}
                 <ImageDropzone
                   value={cat.image}
                   onChange={url => updateImage(key, idx, url)}
@@ -186,6 +277,16 @@ export default function CategoryManager() {
                 </button>
               </div>
             ))}
+
+            {/* Drop zone at end of row */}
+            <div
+              className="cat-tile-dropzone"
+              onDragEnter={(e) => handleDragEnter(e, key, (rows[key] || []).length)}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <span>Drop here</span>
+            </div>
           </div>
         </div>
       ))}
