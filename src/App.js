@@ -12,6 +12,7 @@ import FooterManager from './pages/FooterManager';
 import SaleBannerManager from './pages/SaleBannerManager';
 import HeroManager from './pages/HeroManager';
 import CouponManager from './pages/CouponManager';
+import CollectionManager from './pages/CollectionManager';
 import './styles/global.css';
 
 export const ToastContext = React.createContext();
@@ -47,6 +48,7 @@ export default function App() {
               <Route path="/footer"      element={<FooterManager />} />
               <Route path="/sale-banner" element={<SaleBannerManager />} />
               <Route path="/coupons"     element={<CouponManager />} />
+              <Route path="/collections" element={<CollectionManager />} />
             </Routes>
           </main>
         </div>

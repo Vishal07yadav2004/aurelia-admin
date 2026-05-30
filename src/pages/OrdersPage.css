@@ -48,6 +48,7 @@
   flex: 1; display: flex; gap: 20px; align-items: center;
   font-size: 13px; color: #777;
 }
+.order-customer-name { font-weight: 500; color: #333; }
 .order-date-text { font-size: 12px; color: #aaa; }
 
 .order-row-right { display: flex; align-items: center; gap: 14px; }
@@ -68,6 +69,22 @@
   padding: 16px 20px;
   background: #fdfcfb;
 }
+
+/* Customer/Shipping/Payment grid */
+.order-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0ece6;
+}
+.order-detail-section { }
+.order-detail-line {
+  font-family: 'Jost', sans-serif;
+  font-size: 12px; color: #555; line-height: 1.7;
+}
+
 .items-heading {
   font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
   text-transform: uppercase; color: #bbb; margin-bottom: 12px;
@@ -94,7 +111,27 @@
   font-size: 15px; font-style: italic; color: #555;
 }
 
-/* breakdown sidebar */
+/* Order totals */
+.order-totals {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f0ece6;
+  max-width: 280px;
+  margin-left: auto;
+}
+.order-total-row {
+  display: flex; justify-content: space-between;
+  font-family: 'Jost', sans-serif; font-size: 12px;
+  color: #777; padding: 4px 0;
+}
+.order-total-row.discount { color: #2d6a4f; }
+.order-total-row.grand-total {
+  font-size: 16px; font-weight: 600; color: #1a1a1a;
+  border-top: 1px solid #e8e5e0; padding-top: 8px; margin-top: 6px;
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+}
+
+/* Breakdown sidebar */
 .items-breakdown { position: sticky; top: 20px; }
 .section-heading {
   font-family: 'Cormorant Garamond', serif;
@@ -124,4 +161,5 @@
 @media (max-width: 1000px) {
   .orders-layout { grid-template-columns: 1fr; }
   .orders-summary { grid-template-columns: repeat(2,1fr); }
+  .order-details-grid { grid-template-columns: 1fr; }
 }
