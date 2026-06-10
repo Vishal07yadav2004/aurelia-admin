@@ -2,10 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { db } from '../firebase/config';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, serverTimestamp,
-  setDoc, getDoc
+  onSnapshot, serverTimestamp, setDoc, getDoc
 } from 'firebase/firestore';
-import { Trash2, Plus, Pencil, Package, X, Video, Image as ImgIcon, Tag, FileText, FolderTree, Ruler, Check } from 'lucide-react';
+import {
+  Trash2, Plus, Pencil, Package, X, Video,
+  Image as ImgIcon, Tag, FileText, FolderTree, Ruler, Check
+} from 'lucide-react';
 import { ToastContext } from '../App';
 import ImageDropzone from '../components/ImageDropzone';
 import { getSizeConfig } from '../data/sizeConfig';
@@ -25,24 +27,23 @@ const FALLBACK_SUBCATS = {
   charms:    ['Gold','Silver','Enamel','Birthstone','Letter','Symbol'],
 };
 
-
 const CATEGORY_DEFAULTS = {
-  watches: { details: 'This timepiece is a masterpiece of horological artistry.', care: 'Wind the crown gently every 40 hours if not worn.', shipping: 'Fully insured express shipping within 1–2 business days.' },
-  rings: { details: 'Crafted from premium materials and finished by hand.', care: 'Remove before swimming or using harsh chemicals.', shipping: 'Complimentary express shipping on all orders.' },
-  necklaces: { details: 'A beautifully crafted necklace featuring superior materials.', care: 'Store flat or hung to prevent tangling.', shipping: 'Express shipping, 1–2 business days.' },
-  bracelets: { details: 'A meticulously crafted bracelet combining comfort with elegance.', care: 'Store flat in the provided box.', shipping: 'Fully insured shipping with tracking.' },
-  earrings: { details: 'Stunning earrings crafted with attention to detail.', care: 'Wipe gently after each wear.', shipping: 'Express shipping, 1–2 business days.' },
-  pendants: { details: 'An elegant pendant featuring superior craftsmanship.', care: 'Polish with a soft cloth.', shipping: 'Express shipping, 1–2 business days.' },
-  anklets: { details: 'A delicate anklet that adds elegance to every step.', care: 'Remove before swimming.', shipping: 'Express shipping, 1–2 business days.' },
-  charms: { details: 'A meaningful charm crafted with care.', care: 'Wipe with a soft cloth after wearing.', shipping: 'Express shipping, 1–2 business days.' },
+  watches:   { details:'This timepiece is a masterpiece of horological artistry.', care:'Wind the crown gently every 40 hours if not worn.', shipping:'Fully insured express shipping within 1–2 business days.' },
+  rings:     { details:'Crafted from premium materials and finished by hand.', care:'Remove before swimming or using harsh chemicals.', shipping:'Complimentary express shipping on all orders.' },
+  necklaces: { details:'A beautifully crafted necklace featuring superior materials.', care:'Store flat or hung to prevent tangling.', shipping:'Express shipping, 1–2 business days.' },
+  bracelets: { details:'A meticulously crafted bracelet combining comfort with elegance.', care:'Store flat in the provided box.', shipping:'Fully insured shipping with tracking.' },
+  earrings:  { details:'Stunning earrings crafted with attention to detail.', care:'Wipe gently after each wear.', shipping:'Express shipping, 1–2 business days.' },
+  pendants:  { details:'An elegant pendant featuring superior craftsmanship.', care:'Polish with a soft cloth.', shipping:'Express shipping, 1–2 business days.' },
+  anklets:   { details:'A delicate anklet that adds elegance to every step.', care:'Remove before swimming.', shipping:'Express shipping, 1–2 business days.' },
+  charms:    { details:'A meaningful charm crafted with care.', care:'Wipe with a soft cloth after wearing.', shipping:'Express shipping, 1–2 business days.' },
 };
 
 const EMPTY = {
-  name: '', price: '', category: '', subCategory: '', section: 'none',
-  images: [''], video: '', salePrice: '', saleEnabled: false,
-  sizeStock: {}, customSizes: [], quantity: '',
+  name:'', price:'', category:'', subCategory:'', section:'none',
+  images:[], video:'', salePrice:'', saleEnabled:false,
+  sizeStock:{}, customSizes:[], quantity:'',
 };
-const EMPTY_DESC = { details: '', care: '', shipping: '' };
+const EMPTY_DESC = { details:'', care:'', shipping:'' };
 
 export default function ProductManager() {
   const { showToast } = useContext(ToastContext);
@@ -57,8 +58,6 @@ export default function ProductManager() {
   const [activeFormTab, setActiveFormTab] = useState('basic');
   const [newCustomSize, setNewCustomSize] = useState('');
 
-
-  // FIXED: Load products from Firebase + merge with fallbacks
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'products'), snap => {
       const fbProds = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -109,7 +108,6 @@ export default function ProductManager() {
     return [...new Set([...fromFB, ...fromFallback])];
   };
 
-
   const handleCategoryChange = (catId) => {
     setForm(f => ({ ...f, category: catId, subCategory: '', sizeStock: {}, customSizes: [] }));
     if (catId && !editId) {
@@ -133,7 +131,6 @@ export default function ProductManager() {
     setForm(f => { const s = { ...f.sizeStock }; delete s[size]; return { ...f, customSizes: f.customSizes.filter(x => x !== size), sizeStock: s }; });
   };
 
-  // FIXED: quickToggleStock only for Firebase products
   const quickToggleStock = async (productId, size, currentStatus) => {
     if (typeof productId === 'number') {
       showToast('Seed this product to Firebase first to manage stock', 'error');
@@ -146,7 +143,6 @@ export default function ProductManager() {
     showToast(`Size ${size} ${!currentStatus ? 'in stock' : 'out of stock'} ✓`);
   };
 
-  // Seed all default products to Firebase
   const seedDefaultProducts = async () => {
     if (!window.confirm('This will add all 16 default products to Firebase so they become fully editable. Continue?')) return;
     setLoading(true);
@@ -166,10 +162,9 @@ export default function ProductManager() {
     setLoading(false);
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validImages = form.images.filter(i => i && i.trim());
+    const validImages = (form.images || []).filter(i => i && i.trim());
     if (!form.name || !form.price || !form.category || validImages.length === 0) {
       showToast('Fill all required fields and add at least one image', 'error'); return;
     }
@@ -188,7 +183,6 @@ export default function ProductManager() {
 
       if (editId) {
         if (typeof editId === 'number') {
-          // Fallback product — create new in Firebase
           const ref = await addDoc(collection(db,'products'), { ...productData, createdAt: serverTimestamp() });
           savedId = ref.id;
           showToast('Product saved to Firebase — now fully editable! ✓');
@@ -220,12 +214,12 @@ export default function ProductManager() {
     setLoading(false);
   };
 
-
   const handleEdit = async (p) => {
     setForm({
       name: p.name, price: String(p.price), category: p.category || '',
       subCategory: p.subCategory || '', section: p.section || 'none',
-      images: p.images?.length ? p.images : [p.image||''], video: p.video || '',
+      images: p.images?.length ? p.images : (p.image ? [p.image] : []),
+      video: p.video || '',
       salePrice: p.salePrice ? String(p.salePrice) : '', saleEnabled: Boolean(p.salePrice),
       sizeStock: p.sizeStock || {}, customSizes: p.customSizes || [],
       quantity: p.quantity ? String(p.quantity) : '',
@@ -250,10 +244,6 @@ export default function ProductManager() {
     if (editId === id) { setEditId(null); setForm(EMPTY); setDesc(EMPTY_DESC); }
   };
 
-  const addImageSlot = () => setForm(f => ({ ...f, images: [...f.images, ''] }));
-  const removeImageSlot = (i) => setForm(f => ({ ...f, images: f.images.filter((_,idx) => idx !== i) }));
-  const updateImage = (i, url) => setForm(f => { const imgs = [...f.images]; imgs[i] = url; return { ...f, images: imgs }; });
-
   const filtered = filter === 'all' ? products
     : filter === 'none' ? products.filter(p => !p.section || p.section === 'none' || p.section === '')
     : products.filter(p => p.section === filter);
@@ -264,15 +254,15 @@ export default function ProductManager() {
   const currentSubCats = getSubCats(form.category);
   const sizeConfig = form.category ? getSizeConfig(form.category) : null;
 
+  // Form tabs — removed 'sizes' material section, kept size stock
   const FORM_TABS = [
-    { key:'basic', label:'Basic Info', icon: Package },
-    { key:'subcats', label:'Sub-category', icon: FolderTree },
-    { key:'sizes', label:'Sizes & Stock', icon: Ruler },
-    { key:'media', label:'Media', icon: ImgIcon },
-    { key:'sale', label:'Sale Pricing', icon: Tag },
-    { key:'content', label:'Product Content', icon: FileText },
+    { key:'basic',   label:'Basic Info',        icon: Package  },
+    { key:'subcats', label:'Sub-category',       icon: FolderTree },
+    { key:'sizes',   label:'Sizes & Stock',      icon: Ruler    },
+    { key:'media',   label:'Media',              icon: ImgIcon  },
+    { key:'sale',    label:'Sale Pricing',        icon: Tag      },
+    { key:'content', label:'Product Content',    icon: FileText },
   ];
-
 
   return (
     <div className="product-manager">
@@ -308,15 +298,18 @@ export default function ProductManager() {
               <div className="form-grid">
                 <div className="form-field">
                   <label className="field-label">Product Name *</label>
-                  <input className="field-input" placeholder="e.g. Diamond Solitaire Ring" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                  <input className="field-input" placeholder="e.g. Diamond Solitaire Ring"
+                    value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                 </div>
                 <div className="form-field">
                   <label className="field-label">Price (₹) *</label>
-                  <input className="field-input" type="number" placeholder="e.g. 129999" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
+                  <input className="field-input" type="number" placeholder="e.g. 129999"
+                    value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
                 </div>
                 <div className="form-field">
                   <label className="field-label">Quantity / Stock</label>
-                  <input className="field-input" type="number" placeholder="e.g. 50" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} />
+                  <input className="field-input" type="number" placeholder="e.g. 50"
+                    value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} />
                 </div>
                 <div className="form-field">
                   <label className="field-label">Category *</label>
@@ -328,15 +321,23 @@ export default function ProductManager() {
                 <div className="form-field" style={{ gridColumn:'1/-1' }}>
                   <label className="field-label">Show in Homepage Section</label>
                   <div className="section-checkboxes">
-                    <label className="section-check"><input type="radio" name="section" value="none" checked={form.section === 'none' || !form.section} onChange={() => setForm({...form, section:'none'})} /> <span>None (category only)</span></label>
-                    <label className="section-check"><input type="radio" name="section" value="bestSellers" checked={form.section === 'bestSellers'} onChange={() => setForm({...form, section:'bestSellers'})} /> <span>⭐ Best Sellers</span></label>
-                    <label className="section-check"><input type="radio" name="section" value="newArrivals" checked={form.section === 'newArrivals'} onChange={() => setForm({...form, section:'newArrivals'})} /> <span>✨ New Arrivals</span></label>
+                    <label className="section-check">
+                      <input type="radio" name="section" value="none" checked={form.section === 'none' || !form.section} onChange={() => setForm({...form, section:'none'})} />
+                      <span>None (category only)</span>
+                    </label>
+                    <label className="section-check">
+                      <input type="radio" name="section" value="bestSellers" checked={form.section === 'bestSellers'} onChange={() => setForm({...form, section:'bestSellers'})} />
+                      <span>⭐ Best Sellers</span>
+                    </label>
+                    <label className="section-check">
+                      <input type="radio" name="section" value="newArrivals" checked={form.section === 'newArrivals'} onChange={() => setForm({...form, section:'newArrivals'})} />
+                      <span>✨ New Arrivals</span>
+                    </label>
                   </div>
                 </div>
               </div>
             </div>
           )}
-
 
           {activeFormTab === 'subcats' && (
             <div className="form-section">
@@ -347,7 +348,8 @@ export default function ProductManager() {
                       <label className="field-label">Quick Select</label>
                       <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
                         {currentSubCats.map(sub => (
-                          <button key={sub} type="button" style={{ padding:'6px 14px', borderRadius:'100px', border: form.subCategory===sub ? '1.5px solid #1a1a1a' : '1px solid #ddd', background: form.subCategory===sub ? '#1a1a1a' : 'transparent', color: form.subCategory===sub ? '#fff' : '#555', fontFamily:'Jost,sans-serif', fontSize:12, cursor:'pointer' }}
+                          <button key={sub} type="button"
+                            style={{ padding:'6px 14px', borderRadius:'100px', border: form.subCategory===sub ? '1.5px solid #1a1a1a' : '1px solid #ddd', background: form.subCategory===sub ? '#1a1a1a' : 'transparent', color: form.subCategory===sub ? '#fff' : '#555', fontFamily:'Jost,sans-serif', fontSize:12, cursor:'pointer' }}
                             onClick={() => setForm(f => ({ ...f, subCategory: f.subCategory===sub ? '' : sub }))}>{sub}</button>
                         ))}
                       </div>
@@ -355,7 +357,8 @@ export default function ProductManager() {
                   )}
                   <div className="form-field">
                     <label className="field-label">Or enter Custom Sub-category</label>
-                    <input className="field-input" placeholder="e.g. Rose Gold, Kundan..." value={form.subCategory} onChange={e => setForm({ ...form, subCategory: e.target.value })} />
+                    <input className="field-input" placeholder="e.g. Rose Gold, Kundan..."
+                      value={form.subCategory} onChange={e => setForm({ ...form, subCategory: e.target.value })} />
                   </div>
                 </>
               )}
@@ -379,7 +382,10 @@ export default function ProductManager() {
                   </div>
                   <label className="field-label" style={{ marginBottom:12, display:'block' }}>Add Custom Sizes</label>
                   <div style={{ display:'flex', gap:8, marginBottom:14 }}>
-                    <input className="field-input" placeholder='e.g. 13, XXL' value={newCustomSize} onChange={e => setNewCustomSize(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }} style={{ flex:1 }} />
+                    <input className="field-input" placeholder='e.g. 13, XXL' value={newCustomSize}
+                      onChange={e => setNewCustomSize(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }}
+                      style={{ flex:1 }} />
                     <button type="button" className="btn-primary" style={{ padding:'10px 20px' }} onClick={addCustomSize}><Plus size={14} /> Add</button>
                   </div>
                   {form.customSizes.length > 0 && (
@@ -397,27 +403,27 @@ export default function ProductManager() {
             </div>
           )}
 
-
           {activeFormTab === 'media' && (
             <div className="form-section">
-              <p className="form-hint" style={{marginBottom:16}}>Add up to 5 photos. First photo is main.</p>
-              <div className="media-grid">
-                {form.images.map((img, i) => (
-                  <div className="media-slot" key={i}>
-                    <div className="media-slot-header">
-                      <span className="media-slot-num">{i === 0 ? '⭐ Main' : `Photo ${i+1}`}</span>
-                      {i > 0 && <button type="button" className="media-remove-btn" onClick={() => removeImageSlot(i)}><X size={12} /></button>}
-                    </div>
-                    <ImageDropzone value={img} onChange={url => updateImage(i, url)} folder="aurelia-products" aspect={1} />
-                  </div>
-                ))}
-                {form.images.length < 5 && (
-                  <button type="button" className="media-add-slot" onClick={addImageSlot}><ImgIcon size={20} color="#ccc" /><span>Add Photo</span></button>
-                )}
-              </div>
-              <div className="form-field" style={{marginTop:24}}>
+              <p className="form-hint" style={{ marginBottom:16 }}>
+                Upload up to 5 photos at once. First photo is the main image. You can crop each one or use the original.
+              </p>
+
+              {/* Multi-image dropzone — replaces individual slots */}
+              <ImageDropzone
+                value={form.images}
+                onChange={imgs => setForm(f => ({ ...f, images: imgs }))}
+                folder="aurelia-products"
+                aspect={1}
+                multi={true}
+                maxFiles={5}
+                label="Product Photos (up to 5)"
+              />
+
+              <div className="form-field" style={{ marginTop:24 }}>
                 <label className="field-label"><Video size={12}/> Product Video (Optional)</label>
-                <input className="field-input" placeholder="Paste video URL..." value={form.video} onChange={e => setForm({...form, video: e.target.value})} />
+                <input className="field-input" placeholder="Paste video URL..."
+                  value={form.video} onChange={e => setForm({...form, video: e.target.value})} />
               </div>
             </div>
           )}
@@ -427,19 +433,21 @@ export default function ProductManager() {
               <div style={{ background:'#fff8f0', padding:'12px 16px', borderRadius:10, marginBottom:16, fontSize:12, color:'#856404' }}>
                 💡 <strong>Tip:</strong> For category-wide sales, use the <strong>Sale Banner</strong> page instead.
               </div>
-              <label className="section-check" style={{marginBottom:20}}>
-                <input type="checkbox" checked={form.saleEnabled} onChange={e => setForm({...form, saleEnabled: e.target.checked, salePrice: ''})} />
-                <span style={{fontWeight:500}}>Enable Sale Price for this Product</span>
+              <label className="section-check" style={{ marginBottom:20 }}>
+                <input type="checkbox" checked={form.saleEnabled}
+                  onChange={e => setForm({...form, saleEnabled: e.target.checked, salePrice: ''})} />
+                <span style={{ fontWeight:500 }}>Enable Sale Price for this Product</span>
               </label>
               {form.saleEnabled && (
                 <div className="form-grid">
                   <div className="form-field">
                     <label className="field-label">Original Price</label>
-                    <input className="field-input" value={`₹${form.price || 0}`} readOnly style={{background:'#f8f8f8',color:'#aaa'}} />
+                    <input className="field-input" value={`₹${form.price || 0}`} readOnly style={{ background:'#f8f8f8', color:'#aaa' }} />
                   </div>
                   <div className="form-field">
                     <label className="field-label">Sale Price (₹) *</label>
-                    <input className="field-input" type="number" value={form.salePrice} onChange={e => setForm({...form, salePrice: e.target.value})} />
+                    <input className="field-input" type="number" value={form.salePrice}
+                      onChange={e => setForm({...form, salePrice: e.target.value})} />
                   </div>
                 </div>
               )}
@@ -457,21 +465,26 @@ export default function ProductManager() {
             <div className="form-section">
               <div className="form-field" style={{ marginBottom:16 }}>
                 <label className="field-label">Details Tab</label>
-                <textarea className="field-input" style={{ minHeight:100 }} placeholder="Materials, craftsmanship..." value={desc.details} onChange={e => setDesc({ ...desc, details: e.target.value })} />
+                <textarea className="field-input" style={{ minHeight:100 }} placeholder="Materials, craftsmanship..."
+                  value={desc.details} onChange={e => setDesc({ ...desc, details: e.target.value })} />
               </div>
               <div className="form-field" style={{ marginBottom:16 }}>
                 <label className="field-label">Care Tab</label>
-                <textarea className="field-input" style={{ minHeight:80 }} placeholder="How to clean, store..." value={desc.care} onChange={e => setDesc({ ...desc, care: e.target.value })} />
+                <textarea className="field-input" style={{ minHeight:80 }} placeholder="How to clean, store..."
+                  value={desc.care} onChange={e => setDesc({ ...desc, care: e.target.value })} />
               </div>
               <div className="form-field">
                 <label className="field-label">Shipping Tab</label>
-                <textarea className="field-input" style={{ minHeight:80 }} placeholder="Shipping times, returns..." value={desc.shipping} onChange={e => setDesc({ ...desc, shipping: e.target.value })} />
+                <textarea className="field-input" style={{ minHeight:80 }} placeholder="Shipping times, returns..."
+                  value={desc.shipping} onChange={e => setDesc({ ...desc, shipping: e.target.value })} />
               </div>
             </div>
           )}
 
           <div className="form-actions">
-            <button className="btn-primary" type="submit" disabled={loading}>{loading ? 'Saving...' : editId ? 'Update Product' : 'Add Product'}</button>
+            <button className="btn-primary" type="submit" disabled={loading}>
+              {loading ? 'Saving...' : editId ? 'Update Product' : 'Add Product'}
+            </button>
             {editId
               ? <button className="btn-secondary" type="button" onClick={() => { setEditId(null); setForm(EMPTY); setDesc(EMPTY_DESC); }}>Cancel Edit</button>
               : <button className="btn-secondary" type="button" onClick={() => { setForm(EMPTY); setDesc(EMPTY_DESC); }}>Clear</button>
@@ -479,7 +492,6 @@ export default function ProductManager() {
           </div>
         </form>
       </div>
-
 
       <div className="products-list-section">
         <div className="list-header">
@@ -511,7 +523,10 @@ export default function ProductManager() {
                       {p.images?.length > 1 && <span className="pq-img-count">+{p.images.length-1}</span>}
                     </div>
                     <div className="pq-info">
-                      <p className="pq-name">{p.name} {!isFirebaseProduct && <span style={{ fontSize:9, color:'#999', background:'#f0f0f0', padding:'2px 6px', borderRadius:4, marginLeft:6 }}>LOCAL</span>}</p>
+                      <p className="pq-name">
+                        {p.name}
+                        {!isFirebaseProduct && <span style={{ fontSize:9, color:'#999', background:'#f0f0f0', padding:'2px 6px', borderRadius:4, marginLeft:6 }}>LOCAL</span>}
+                      </p>
                       <div className="pq-meta">
                         <span className="pq-category">{p.category||'—'}</span>
                         {p.subCategory && <span className="pq-category" style={{ background:'#e8f4f8', color:'#2d6a9f' }}>{p.subCategory}</span>}
@@ -548,7 +563,7 @@ export default function ProductManager() {
                   )}
                   {p.category && !isFirebaseProduct && (
                     <div style={{ marginTop:12, paddingTop:12, borderTop:'1px solid #f0ece6', display:'flex', alignItems:'center', gap:8 }}>
-                      <span style={{ fontSize:11, color:'#999', fontStyle:'italic' }}>⚠️ This product is local-only. Click Edit → Update to save it to Firebase for full management.</span>
+                      <span style={{ fontSize:11, color:'#999', fontStyle:'italic' }}>⚠️ Local product. Click Edit → Update to save to Firebase for full management.</span>
                     </div>
                   )}
                 </div>

@@ -1,17 +1,8 @@
 import React, { useState, useRef, useCallback, useContext } from 'react';
-import { X, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCw, Check, ImageOff } from 'lucide-react';
 import { ToastContext } from '../App';
 import './ImageCropper.css';
 
-/**
- * ImageCropper
- * Props:
- *   src        string  — data URL or remote URL to crop
- *   aspect     number  — e.g. 1 for square, 16/9 for landscape (default 1)
- *   onConfirm  fn(croppedDataUrl) => void
- *   onCancel   fn()
- *   preview    string  — 'square' | 'rectangle'  (shape of the preview thumbnail)
- */
 export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel, preview = 'square' }) {
   const { showToast } = useContext(ToastContext);
   const canvasRef  = useRef(null);
@@ -52,7 +43,6 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel, pre
   };
   const handleMouseUp = () => setDragging(false);
 
-  // Touch support
   const handleTouchStart = (e) => {
     const t = e.touches[0];
     setDragging(true);
@@ -71,6 +61,12 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel, pre
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     setCroppedPreview(dataUrl);
     setStep('preview');
+  };
+
+  // Use original image without any cropping
+  const handleUseOriginal = () => {
+    onConfirm(src);
+    showToast('Original image used ✓');
   };
 
   return (
@@ -95,9 +91,7 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel, pre
               onTouchEnd={() => setDragging(false)}
             >
               <canvas ref={canvasRef} width={cropW} height={cropH} style={{ cursor: dragging ? 'grabbing' : 'grab' }} />
-              {/* Hidden img used as source */}
-              <img ref={imgRef} src={src} alt="" style={{ display: 'none' }}
-                onLoad={() => { drawCanvas(); }} />
+              <img ref={imgRef} src={src} alt="" style={{ display: 'none' }} onLoad={() => { drawCanvas(); }} />
               <div className="cropper-frame" style={{ width: cropW, height: cropH }} />
             </div>
 
@@ -116,6 +110,10 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel, pre
               </div>
               <div className="cropper-btn-row">
                 <button className="btn-secondary" onClick={() => { setZoom(1); setRotation(0); setOffset({x:0,y:0}); setTimeout(drawCanvas,0); }}>Reset</button>
+                {/* NEW: Use Original button */}
+                <button className="btn-secondary" onClick={handleUseOriginal} title="Skip cropping and use original image">
+                  <ImageOff size={14} /> Use Original
+                </button>
                 <button className="btn-primary" onClick={handleCropNext}><Check size={15} /> Preview →</button>
               </div>
             </div>
@@ -141,8 +139,11 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel, pre
             </div>
             <div className="cropper-btn-row" style={{ marginTop: 20 }}>
               <button className="btn-secondary" onClick={() => setStep('crop')}>← Back to Crop</button>
+              <button className="btn-secondary" onClick={handleUseOriginal}>
+                <ImageOff size={14} /> Use Original Instead
+              </button>
               <button className="btn-primary" onClick={() => onConfirm(croppedPreview)}>
-                <Check size={15} /> Use This Image
+                <Check size={15} /> Use Cropped
               </button>
             </div>
           </div>
