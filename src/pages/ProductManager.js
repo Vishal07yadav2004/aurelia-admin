@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import {
   Trash2, Plus, Pencil, Package, X,
-  Video, Image as ImgIcon, Tag, FileText, FolderTree, Ruler, Check
+  Video, Image as ImgIcon, Tag, FileText, FolderTree, Ruler, Check,  Palette
 } from 'lucide-react';
 import { ToastContext } from '../App';
 import ImageDropzone from '../components/ImageDropzone';
@@ -47,7 +47,11 @@ const EMPTY = {
   images: [], video: '',
   salePrice: '', saleEnabled: false,
   sizeStock: {}, customSizes: [], quantity: '',
-};
+
+  hasSize: true,     //Toggle: does this product have sizes?
+  sizeNote: '',      // Custom note instead of sizes (e.g. "Adjustable")
+  variants: [],      // Array of ( name, color, images [])
+}; 
 const EMPTY_DESC = { details: '', care: '', shipping: '' };
 
 export default function ProductManager() {
@@ -201,6 +205,9 @@ export default function ProductManager() {
         sizeStock: form.sizeStock || {},
         customSizes: form.customSizes || [],
         quantity: Number(form.quantity) || 0,
+        hasSize: form.hasSize !== false,
+        sizeNote: form.sizeNote || '',
+        variants: (form.variants || []).filter(v => v.name || (v.images || []).length > 0),
         ...(form.saleEnabled && form.salePrice
           ? { salePrice: Number(form.salePrice) }
           : { salePrice: null }),
@@ -273,6 +280,9 @@ export default function ProductManager() {
       sizeStock: p.sizeStock || {},
       customSizes: p.customSizes || [],
       quantity: p.quantity ? String(p.quantity) : '',
+      hasSize: p.hasSize !== false,
+      sizeNote: p.sizeNote || '',
+      variants: p.variants || [],
     });
     setEditId(p.id);
     setActiveFormTab('basic');
@@ -311,13 +321,14 @@ export default function ProductManager() {
   const sizeConfig = form.category ? getSizeConfig(form.category) : null;
 
   const FORM_TABS = [
-    { key: 'basic',   label: 'Basic Info',     icon: Package   },
-    { key: 'subcats', label: 'Sub-category',   icon: FolderTree},
-    { key: 'sizes',   label: 'Sizes & Stock',  icon: Ruler     },
-    { key: 'media',   label: 'Media',          icon: ImgIcon   },
-    { key: 'sale',    label: 'Sale Pricing',   icon: Tag       },
-    { key: 'content', label: 'Product Content',icon: FileText  },
-  ];
+  { key: 'basic',    label: 'Basic Info',      icon: Package    },
+  { key: 'subcats',  label: 'Sub-category',    icon: FolderTree },
+  { key: 'sizes',    label: 'Sizes & Stock',   icon: Ruler      },
+  { key: 'variants', label: 'Variants',        icon: Palette    },
+  { key: 'media',    label: 'Media',           icon: ImgIcon    },
+  { key: 'sale',     label: 'Sale Pricing',    icon: Tag        },
+  { key: 'content',  label: 'Product Content', icon: FileText   },
+];
 
   return (
     <div className="product-manager">
@@ -529,61 +540,182 @@ export default function ProductManager() {
           {/* ── SIZES & STOCK ── */}
           {activeFormTab === 'sizes' && (
             <div className="form-section">
-              {!form.category
-                ? <p style={{ color: '#aaa', fontStyle: 'italic', fontSize: 13 }}>Please select a category first.</p>
-                : (
-                  <>
-                    <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>
-                      Standard Sizes — Click to Toggle In/Out of Stock
-                    </label>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
-                      {sizeConfig.sizes.map(size => {
-                        const isOut = form.sizeStock[size] === false;
-                        return (
-                          <button key={size} type="button" onClick={() => toggleSizeStock(size)} style={{
-                            padding: '10px 18px',
-                            border: isOut ? '1.5px solid #e74c3c' : '1.5px solid #2d6a4f',
-                            background: isOut ? '#fff5f5' : '#f0fdf4',
-                            color: isOut ? '#e74c3c' : '#2d6a4f',
-                            borderRadius: 100, fontFamily: 'Jost,sans-serif', fontSize: 13,
-                            fontWeight: 500, cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            textDecoration: isOut ? 'line-through' : 'none',
-                          }}>
-                            {isOut ? '✕' : <Check size={13} />} {size}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>Add Custom Sizes</label>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                      <input className="field-input" placeholder='e.g. 13, XXL'
-                        value={newCustomSize} onChange={e => setNewCustomSize(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }}
-                        style={{ flex: 1 }} />
-                      <button type="button" className="btn-primary" style={{ padding: '10px 20px' }} onClick={addCustomSize}>
-                        <Plus size={14} /> Add
-                      </button>
-                    </div>
-                    {(form.customSizes || []).length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                        {form.customSizes.map(size => (
-                          <div key={size} style={{
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            padding: '8px 14px', border: '1.5px solid #2d6a4f',
-                            background: '#f0fdf4', borderRadius: 100,
-                          }}>
-                            <span style={{ fontSize: 13, color: '#2d6a4f' }}>{size}</span>
-                            <button type="button" onClick={() => removeCustomSize(size)}
-                              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', padding: 0 }}>
-                              <X size={13} />
+              {/* Toggle for size availability */}
+              <div style={{
+                background: '#f9f7f3', padding: '14px 18px', borderRadius: 10,
+                marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12,
+              }}>
+                <label className="section-check" style={{ margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={form.hasSize}
+                    onChange={e => setForm(f => ({ ...f, hasSize: e.target.checked }))}
+                  />
+                  <span style={{ fontWeight: 500 }}>This product has size options</span>
+                </label>
+              </div>
+
+              {form.hasSize ? (
+                <>
+                  {!form.category ? (
+                    <p style={{ color: '#aaa', fontStyle: 'italic', fontSize: 13 }}>
+                      Please select a category first.
+                    </p>
+                  ) : (
+                    <>
+                      <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>
+                        Standard Sizes — Click to Toggle In/Out of Stock
+                      </label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+                        {sizeConfig.sizes.map(size => {
+                          const isOut = form.sizeStock[size] === false;
+                          return (
+                            <button key={size} type="button" onClick={() => toggleSizeStock(size)} style={{
+                              padding: '10px 18px',
+                              border: isOut ? '1.5px solid #e74c3c' : '1.5px solid #2d6a4f',
+                              background: isOut ? '#fff5f5' : '#f0fdf4',
+                              color: isOut ? '#e74c3c' : '#2d6a4f',
+                              borderRadius: 100, fontFamily: 'Jost,sans-serif', fontSize: 13,
+                              fontWeight: 500, cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', gap: 6,
+                              textDecoration: isOut ? 'line-through' : 'none',
+                            }}>
+                              {isOut ? '✕' : <Check size={13} />} {size}
                             </button>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
-                    )}
-                  </>
-                )}
+                      <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>Add Custom Sizes</label>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                        <input className="field-input" placeholder='e.g. 13, XXL'
+                          value={newCustomSize} onChange={e => setNewCustomSize(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }}
+                          style={{ flex: 1 }} />
+                        <button type="button" className="btn-primary" style={{ padding: '10px 20px' }} onClick={addCustomSize}>
+                          <Plus size={14} /> Add
+                        </button>
+                      </div>
+                      {(form.customSizes || []).length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                          {form.customSizes.map(size => (
+                            <div key={size} style={{
+                              display: 'flex', alignItems: 'center', gap: 6,
+                              padding: '8px 14px', border: '1.5px solid #2d6a4f',
+                              background: '#f0fdf4', borderRadius: 100,
+                            }}>
+                              <span style={{ fontSize: 13, color: '#2d6a4f' }}>{size}</span>
+                              <button type="button" onClick={() => removeCustomSize(size)}
+                                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', padding: 0 }}>
+                                <X size={13} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="form-field">
+                  <label className="field-label">Size Note (Optional)</label>
+                  <input
+                    className="field-input"
+                    placeholder="e.g. One Size, Adjustable, Fits all wrist sizes..."
+                    value={form.sizeNote}
+                    onChange={e => setForm(f => ({ ...f, sizeNote: e.target.value }))}
+                  />
+                  <p className="form-hint">
+                    This text will show instead of size buttons on the product page.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── VARIANTS ── */}
+          {activeFormTab === 'variants' && (
+            <div className="form-section">
+              <div style={{
+                background: '#f0fdf4', border: '1px solid #c3e6cb', borderRadius: 10,
+                padding: '12px 16px', marginBottom: 18, fontSize: 12, color: '#2d6a4f',
+                fontFamily: 'Jost, sans-serif',
+              }}>
+                ✓ Variants are different colors/styles of the same product. Each variant can have its own images.
+              </div>
+
+              {/* Existing variants */}
+              {(form.variants || []).map((variant, idx) => (
+                <div key={idx} className="variant-card">
+                  <div className="variant-header">
+                    <span className="variant-num">Variant {idx + 1}</span>
+                    <button type="button" className="variant-remove"
+                      onClick={() => setForm(f => ({
+                        ...f,
+                        variants: f.variants.filter((_, i) => i !== idx),
+                      }))}>
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                  <div className="variant-form-row">
+                    <div className="form-field" style={{ flex: 1 }}>
+                      <label className="field-label">Variant Name</label>
+                      <input className="field-input" placeholder="e.g. Gold, Silver, Red..."
+                        value={variant.name}
+                        onChange={e => {
+                          const updated = [...form.variants];
+                          updated[idx] = { ...updated[idx], name: e.target.value };
+                          setForm(f => ({ ...f, variants: updated }));
+                        }} />
+                    </div>
+                    <div className="form-field" style={{ flex: 1 }}>
+                      <label className="field-label">Color Code (optional)</label>
+                      <div className="color-input-row">
+                        <input type="color" value={variant.color || '#cccccc'}
+                          onChange={e => {
+                            const updated = [...form.variants];
+                            updated[idx] = { ...updated[idx], color: e.target.value };
+                            setForm(f => ({ ...f, variants: updated }));
+                          }} />
+                        <input className="field-input" value={variant.color || ''}
+                          onChange={e => {
+                            const updated = [...form.variants];
+                            updated[idx] = { ...updated[idx], color: e.target.value };
+                            setForm(f => ({ ...f, variants: updated }));
+                          }}
+                          placeholder="#000000" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="form-field" style={{ marginTop: 12 }}>
+                    <label className="field-label">Variant Images</label>
+                    <ImageDropzone
+                      value={variant.images || []}
+                      onChange={imgs => {
+                        const updated = [...form.variants];
+                        updated[idx] = { ...updated[idx], images: imgs };
+                        setForm(f => ({ ...f, variants: updated }));
+                      }}
+                      folder="kanyamaa-variants"
+                      aspect={1}
+                      multi={true}
+                      maxFiles={5}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {/* Add variant button */}
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setForm(f => ({
+                  ...f,
+                  variants: [...(f.variants || []), { name: '', color: '', images: [] }],
+                }))}
+                style={{ marginTop: 12 }}
+              >
+                <Plus size={14} /> Add Variant
+              </button>
             </div>
           )}
 

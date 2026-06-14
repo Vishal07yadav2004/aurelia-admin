@@ -13,6 +13,7 @@ import SaleBannerManager from './pages/SaleBannerManager';
 import HeroManager from './pages/HeroManager';
 import CouponManager from './pages/CouponManager';
 import CollectionManager from './pages/CollectionManager';
+import AnnouncementManager from './pages/AnnouncementManager';
 import './styles/global.css';
 
 export const ToastContext = React.createContext();
@@ -49,6 +50,7 @@ export default function App() {
               <Route path="/sale-banner" element={<SaleBannerManager />} />
               <Route path="/coupons"     element={<CouponManager />} />
               <Route path="/collections" element={<CollectionManager />} />
+              <Route path="/announcements" element={<AnnouncementManager />} />
             </Routes>
           </main>
         </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { db } from '../firebase/config';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { ToastContext } from '../App';
-import { Trash2, Plus, X, GripVertical } from 'lucide-react';
+import { Trash2, Plus, X, GripVertical, Upload } from 'lucide-react';
 import ImageDropzone from '../components/ImageDropzone';
 import './CategoryManager.css';
 
@@ -99,6 +99,44 @@ export default function CategoryManager() {
     if (!window.confirm(`Delete "${cat.label}"?`)) return;
     await saveRow(docId, rows[docId].filter((_, i) => i !== idx));
     showToast('Category removed');
+  };
+
+  // ── DIRECT CLOUDINARY UPLOAD (no cropping) ──
+  const uploadImageDirect = async (file, catId, rowKey, idx) => {
+    if (!file?.type.startsWith('image/')) {
+      showToast('Please select an image file', 'error');
+      return;
+    }
+
+    const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
+    if (!cloudName || !uploadPreset) {
+      showToast('Cloudinary not configured', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('folder', 'kanyamaa-categories');
+
+    try {
+      showToast('Uploading...', 'info');
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.secure_url) {
+        await updateImage(rowKey, idx, data.secure_url);
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Upload failed', 'error');
+    }
   };
 
   // ── DRAG & DROP ──
@@ -248,12 +286,44 @@ export default function CategoryManager() {
                   <GripVertical size={16} />
                 </div>
 
-                {/* Image */}
-                <ImageDropzone
-                  value={cat.image}
-                  onChange={url => updateImage(key, idx, url)}
-                  folder="aurelia-categories"
-                />
+                {/* Image — direct upload, no cropping */}
+                <div className="cat-image-upload">
+                  {cat.image ? (
+                    <div className="cat-image-preview">
+                      <img src={cat.image} alt={cat.label} />
+                      <div className="cat-image-overlay">
+                        <label className="cat-image-change">
+                          Change
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={e => {
+                              if (e.target.files?.[0]) {
+                                uploadImageDirect(e.target.files[0], cat.id, key, idx);
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="cat-image-empty">
+                      <Upload size={20} />
+                      <span>Upload</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={e => {
+                          if (e.target.files?.[0]) {
+                            uploadImageDirect(e.target.files[0], cat.id, key, idx);
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
 
                 {/* Editable label */}
                 <input
