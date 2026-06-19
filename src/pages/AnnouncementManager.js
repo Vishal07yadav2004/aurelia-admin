@@ -34,6 +34,9 @@ export default function AnnouncementManager() {
   const [saving, setSaving] = useState(false);
   const [newMarqueeItem, setNewMarqueeItem] = useState('');
 
+  // Live countdown preview state
+  const [previewTime, setPreviewTime] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
+
   useEffect(() => {
     const u1 = onSnapshot(doc(db, 'site', 'countdown_banner'), snap => {
       if (snap.exists()) setCountdown({ ...DEFAULT_COUNTDOWN, ...snap.data() });
@@ -43,6 +46,30 @@ export default function AnnouncementManager() {
     }, () => {});
     return () => { u1(); u2(); };
   }, []);
+
+  // Update live countdown whenever endDate changes
+  useEffect(() => {
+    if (!countdown.endDate) {
+      setPreviewTime({ days: 0, hours: 0, mins: 0, secs: 0 });
+      return;
+    }
+    const calc = () => {
+      const end = new Date(countdown.endDate).getTime();
+      const now = Date.now();
+      const diff = Math.max(0, end - now);
+      return {
+        days:  Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        mins:  Math.floor((diff / 60000) % 60),
+        secs:  Math.floor((diff / 1000) % 60),
+      };
+    };
+    setPreviewTime(calc());
+    const t = setInterval(() => setPreviewTime(calc()), 1000);
+    return () => clearInterval(t);
+  }, [countdown.endDate]);
+
+  const pad = n => String(n).padStart(2, '0');
 
   const saveCountdown = async () => {
     setSaving(true);
@@ -102,7 +129,7 @@ export default function AnnouncementManager() {
           Shows at the very top of the homepage with a countdown timer.
         </p>
 
-        {/* Preview */}
+        {/* Live Preview */}
         <div className="ann-preview" style={{
           background: countdown.bgColor,
           color: countdown.textColor,
@@ -113,12 +140,18 @@ export default function AnnouncementManager() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 16,
+          flexWrap: 'wrap',
         }}>
           <span style={{ fontWeight: 600, fontSize: 16 }}>{countdown.title || 'Sale Title'}</span>
           <span style={{ fontSize: 13 }}>ending in:</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            {['00', '12', '30', '45'].map((n, i) => (
-              <div key={i} style={{
+            {[
+              { v: previewTime.days,  u: 'days'  },
+              { v: previewTime.hours, u: 'hours' },
+              { v: previewTime.mins,  u: 'mins'  },
+              { v: previewTime.secs,  u: 'secs'  },
+            ].map(({ v, u }) => (
+              <div key={u} style={{
                 background: 'rgba(0,0,0,0.2)',
                 padding: '6px 10px',
                 borderRadius: 6,
@@ -127,10 +160,8 @@ export default function AnnouncementManager() {
                 minWidth: 40,
                 textAlign: 'center',
               }}>
-                {n}
-                <div style={{ fontSize: 9, fontWeight: 400, opacity: 0.7 }}>
-                  {['days', 'hours', 'mins', 'secs'][i]}
-                </div>
+                {pad(v)}
+                <div style={{ fontSize: 9, fontWeight: 400, opacity: 0.7 }}>{u}</div>
               </div>
             ))}
           </div>

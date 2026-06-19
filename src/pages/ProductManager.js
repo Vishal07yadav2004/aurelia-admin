@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import {
   Trash2, Plus, Pencil, Package, X,
-  Video, Image as ImgIcon, Tag, FileText, FolderTree, Ruler, Check,  Palette
+  Video, Image as ImgIcon, Tag, FileText, FolderTree, Ruler, Check, Palette
 } from 'lucide-react';
 import { ToastContext } from '../App';
 import ImageDropzone from '../components/ImageDropzone';
@@ -42,16 +42,15 @@ const CATEGORY_DEFAULTS = {
 
 const EMPTY = {
   name: '', price: '', category: '',
-  subCategories: [], // CHANGED: array instead of string
+  subCategories: [],
   section: 'none',
   images: [], video: '',
   salePrice: '', saleEnabled: false,
   sizeStock: {}, customSizes: [], quantity: '',
-
-  hasSize: true,     //Toggle: does this product have sizes?
-  sizeNote: '',      // Custom note instead of sizes (e.g. "Adjustable")
-  variants: [],      // Array of ( name, color, images [])
-}; 
+  hasSize: true,
+  sizeNote: '',
+  variants: [],
+};
 const EMPTY_DESC = { details: '', care: '', shipping: '' };
 
 export default function ProductManager() {
@@ -66,6 +65,7 @@ export default function ProductManager() {
   const [loading, setLoading]       = useState(false);
   const [activeFormTab, setActiveFormTab] = useState('basic');
   const [newCustomSize, setNewCustomSize] = useState('');
+  const [nextProductNum, setNextProductNum] = useState(1);
 
   // Load only Firebase products — no fallback seed data
   useEffect(() => {
@@ -77,6 +77,11 @@ export default function ProductManager() {
         return bT - aT;
       });
       setProducts(fbProds);
+      // Next product number = highest existing + 1
+      const nums = fbProds
+        .map(p => p.productNum)
+        .filter(n => typeof n === 'number');
+      setNextProductNum(nums.length > 0 ? Math.max(...nums) + 1 : 1);
     }, (err) => {
       console.error('Products error:', err);
       setProducts([]);
@@ -122,7 +127,6 @@ export default function ProductManager() {
     }
   };
 
-  // Toggle a sub-category in/out of the array
   const toggleSubCategory = (sub) => {
     setForm(f => {
       const current = f.subCategories || [];
@@ -178,7 +182,6 @@ export default function ProductManager() {
     e.preventDefault();
     const validImages = (form.images || []).filter(i => i && i.trim());
 
-    // Validate no base64 images (would exceed Firestore limit)
     const hasBase64 = validImages.some(i => i.startsWith('data:'));
     if (hasBase64) {
       showToast('Image not uploaded yet — please wait for upload to complete or use a URL', 'error');
@@ -191,11 +194,17 @@ export default function ProductManager() {
 
     setLoading(true);
     try {
+      // Resolve productNum for edit vs new
+      const existingProduct = editId ? products.find(p => p.id === editId) : null;
+      const resolvedProductNum = editId
+        ? (existingProduct?.productNum || nextProductNum)
+        : nextProductNum;
+      const resolvedSKU = `SKU-${String(resolvedProductNum).padStart(3, '0')}`;
+
       const productData = {
         name: form.name,
         price: Number(form.price),
         category: form.category,
-        // Store array of sub-categories; also keep subCategory string for backwards compat
         subCategories: form.subCategories || [],
         subCategory: (form.subCategories || []).join(', '),
         section: form.section === 'none' ? '' : form.section,
@@ -208,6 +217,8 @@ export default function ProductManager() {
         hasSize: form.hasSize !== false,
         sizeNote: form.sizeNote || '',
         variants: (form.variants || []).filter(v => v.name || (v.images || []).length > 0),
+        productNum: resolvedProductNum,
+        productSKU: resolvedSKU,
         ...(form.saleEnabled && form.salePrice
           ? { salePrice: Number(form.salePrice) }
           : { salePrice: null }),
@@ -240,7 +251,6 @@ export default function ProductManager() {
         });
       }
 
-      // Save any new custom sub-categories back to the map
       if ((form.subCategories || []).length > 0 && form.category) {
         const existing = { ...subCatMap };
         if (!existing[form.category]) existing[form.category] = [];
@@ -266,7 +276,6 @@ export default function ProductManager() {
       name: p.name || '',
       price: String(p.price || ''),
       category: p.category || '',
-      // Support both old string subCategory and new array subCategories
       subCategories: p.subCategories?.length
         ? p.subCategories
         : p.subCategory
@@ -321,14 +330,14 @@ export default function ProductManager() {
   const sizeConfig = form.category ? getSizeConfig(form.category) : null;
 
   const FORM_TABS = [
-  { key: 'basic',    label: 'Basic Info',      icon: Package    },
-  { key: 'subcats',  label: 'Sub-category',    icon: FolderTree },
-  { key: 'sizes',    label: 'Sizes & Stock',   icon: Ruler      },
-  { key: 'variants', label: 'Variants',        icon: Palette    },
-  { key: 'media',    label: 'Media',           icon: ImgIcon    },
-  { key: 'sale',     label: 'Sale Pricing',    icon: Tag        },
-  { key: 'content',  label: 'Product Content', icon: FileText   },
-];
+    { key: 'basic',    label: 'Basic Info',      icon: Package    },
+    { key: 'subcats',  label: 'Sub-category',    icon: FolderTree },
+    { key: 'sizes',    label: 'Sizes & Stock',   icon: Ruler      },
+    { key: 'variants', label: 'Variants',        icon: Palette    },
+    { key: 'media',    label: 'Media',           icon: ImgIcon    },
+    { key: 'sale',     label: 'Sale Pricing',    icon: Tag        },
+    { key: 'content',  label: 'Product Content', icon: FileText   },
+  ];
 
   return (
     <div className="product-manager">
@@ -405,6 +414,12 @@ export default function ProductManager() {
                         onChange={() => setForm({ ...form, section: 'newArrivals' })} />
                       <span>✨ New Arrivals</span>
                     </label>
+                    <label className="section-check">
+                      <input type="radio" name="section" value="combo"
+                        checked={form.section === 'combo'}
+                        onChange={() => setForm({ ...form, section: 'combo' })} />
+                      <span>🎁 Combo</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -429,7 +444,6 @@ export default function ProductManager() {
                       )}
                     </div>
 
-                    {/* Preset sub-cats as toggleable chips */}
                     {currentSubCats.length > 0 && (
                       <div className="form-field" style={{ marginBottom: 18 }}>
                         <label className="field-label" style={{ marginBottom: 10, display: 'block' }}>
@@ -467,7 +481,6 @@ export default function ProductManager() {
                       </div>
                     )}
 
-                    {/* Add custom sub-category */}
                     <div className="form-field">
                       <label className="field-label">Add Custom Sub-category</label>
                       <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
@@ -505,7 +518,6 @@ export default function ProductManager() {
                       </div>
                     </div>
 
-                    {/* Show selected */}
                     {(form.subCategories || []).filter(s => !currentSubCats.includes(s)).length > 0 && (
                       <div style={{ marginTop: 14 }}>
                         <p className="field-label" style={{ marginBottom: 8 }}>Custom Added</p>
@@ -540,7 +552,6 @@ export default function ProductManager() {
           {/* ── SIZES & STOCK ── */}
           {activeFormTab === 'sizes' && (
             <div className="form-section">
-              {/* Toggle for size availability */}
               <div style={{
                 background: '#f9f7f3', padding: '14px 18px', borderRadius: 10,
                 marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12,
@@ -643,7 +654,6 @@ export default function ProductManager() {
                 ✓ Variants are different colors/styles of the same product. Each variant can have its own images.
               </div>
 
-              {/* Existing variants */}
               {(form.variants || []).map((variant, idx) => (
                 <div key={idx} className="variant-card">
                   <div className="variant-header">
@@ -704,7 +714,6 @@ export default function ProductManager() {
                 </div>
               ))}
 
-              {/* Add variant button */}
               <button
                 type="button"
                 className="btn-secondary"
@@ -829,7 +838,13 @@ export default function ProductManager() {
         <div className="list-header">
           <h3 className="section-heading">All Products</h3>
           <div className="filter-tabs">
-            {[['all','All'],['bestSellers','Best Sellers'],['newArrivals','New Arrivals'],['none','No Section']].map(([key, label]) => (
+            {[
+              ['all', 'All'],
+              ['bestSellers', 'Best Sellers'],
+              ['newArrivals', 'New Arrivals'],
+              ['combo', 'Combo'],
+              ['none', 'No Section'],
+            ].map(([key, label]) => (
               <button key={key} className={`filter-tab ${filter === key ? 'active' : ''}`}
                 onClick={() => setFilter(key)}>{label}</button>
             ))}
@@ -867,10 +882,20 @@ export default function ProductManager() {
                       )}
                     </div>
                     <div className="pq-info">
-                      <p className="pq-name">{p.name}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <p className="pq-name">{p.name}</p>
+                        {(p.productSKU || p.productNum) && (
+                          <span style={{
+                            fontFamily: 'monospace', fontSize: 10, color: '#bbb',
+                            background: '#f5f5f5', padding: '1px 6px', borderRadius: 4,
+                            letterSpacing: '0.05em',
+                          }}>
+                            {p.productSKU || `SKU-${String(p.productNum).padStart(3, '0')}`}
+                          </span>
+                        )}
+                      </div>
                       <div className="pq-meta">
                         <span className="pq-category">{p.category || '—'}</span>
-                        {/* Show all sub-categories as chips */}
                         {(p.subCategories?.length > 0
                           ? p.subCategories
                           : p.subCategory ? [p.subCategory] : []
@@ -880,6 +905,9 @@ export default function ProductManager() {
                         ))}
                         {p.section === 'bestSellers' && <span className="pq-section bestSellers">Best Seller</span>}
                         {p.section === 'newArrivals' && <span className="pq-section newArrivals">New Arrival</span>}
+                        {p.section === 'combo' && (
+                          <span className="pq-section" style={{ background: '#fff3e0', color: '#e65100' }}>🎁 Combo</span>
+                        )}
                         {outOfStockCount > 0 && (
                           <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 100, background: '#fff0ee', color: '#e74c3c' }}>
                             {outOfStockCount} OOS

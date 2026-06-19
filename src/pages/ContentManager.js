@@ -341,6 +341,267 @@ function ReviewsTab() {
   );
 }
 
+/* ────────── TRUST BADGES ────────── */
+const BADGE_ICON_OPTIONS = [
+  { value: 'truck',   label: '🚚 Truck — Free Shipping'  },
+  { value: 'returns', label: '↩ Returns arrow'           },
+  { value: 'shield',  label: '🛡 Shield — Authentic'     },
+  { value: 'cod',     label: '💳 Card — COD Available'   },
+];
+
+const DEFAULT_BADGES_ADMIN = [
+  { iconKey: 'truck',   label: 'Free Shipping', sub: 'On orders above ₹999' },
+  { iconKey: 'returns', label: 'Easy Returns',  sub: '7-day return policy'   },
+  { iconKey: 'shield',  label: 'Authentic',     sub: 'Certified jewellery'   },
+  { iconKey: 'cod',     label: 'COD Available', sub: 'Pay on delivery'       },
+];
+
+function BadgesTab({ products }) {
+  const { showToast } = useContext(ToastContext);
+  const [selected, setSelected] = useState(null);
+  const [badges, setBadges]     = useState(DEFAULT_BADGES_ADMIN);
+  const [saving, setSaving]     = useState(false);
+  const [search, setSearch]     = useState('');
+  const [liveUnsub, setLiveUnsub] = useState(null);
+
+  // When product selected, subscribe to its badges doc
+  useEffect(() => {
+    // Clean up previous listener
+    if (liveUnsub) { liveUnsub(); setLiveUnsub(null); }
+    if (!selected) return;
+
+    const unsub = onSnapshot(
+      doc(db, 'productBadges', String(selected.id)),
+      snap => {
+        if (snap.exists() && snap.data().badges?.length) {
+          setBadges(snap.data().badges);
+        } else {
+          setBadges(DEFAULT_BADGES_ADMIN);
+        }
+      },
+      (err) => {
+        console.error('Badges listen error:', err);
+        setBadges(DEFAULT_BADGES_ADMIN);
+      }
+    );
+    setLiveUnsub(() => unsub);
+
+    return () => unsub();
+  }, [selected?.id]);
+
+  const updateBadge = (idx, field, value) => {
+    setBadges(prev => prev.map((b, i) => i === idx ? { ...b, [field]: value } : b));
+  };
+
+  const handleSave = async () => {
+    if (!selected) {
+      showToast('Select a product first', 'error');
+      return;
+    }
+
+    // Validate badges
+    const invalid = badges.some(b => !b.label?.trim());
+    if (invalid) {
+      showToast('All badges must have a label', 'error');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Use the correct Firestore collection: productBadges
+      await setDoc(
+        doc(db, 'productBadges', String(selected.id)),
+        {
+          badges: badges.map(b => ({
+            iconKey: b.iconKey || 'truck',
+            label:   b.label.trim(),
+            sub:     b.sub?.trim() || '',
+          })),
+        }
+      );
+      showToast('Trust badges saved ✓');
+    } catch (err) {
+      console.error('Save badges error:', err);
+      showToast(`Error: ${err.message}`, 'error');
+    }
+    setSaving(false);
+  };
+
+  const handleReset = async () => {
+    setBadges(DEFAULT_BADGES_ADMIN);
+    // Optionally also clear from Firestore so it reverts to default on client
+    if (selected) {
+      try {
+        await setDoc(
+          doc(db, 'productBadges', String(selected.id)),
+          { badges: DEFAULT_BADGES_ADMIN }
+        );
+        showToast('Badges reset to defaults ✓');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const ICON_PREVIEW = { truck: '🚚', returns: '↩', shield: '🛡', cod: '💳' };
+
+  return (
+    <div className="desc-layout">
+
+      {/* LEFT: product picker */}
+      <div className="card product-picker">
+        <p className="picker-title">Select Product</p>
+        <p className="picker-sub">Edit trust badges shown on this product's page</p>
+        <input
+          className="field-input picker-search"
+          placeholder="Search products..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ marginBottom: 12 }}
+        />
+        <div className="product-pick-list">
+          {filteredProducts.map(p => (
+            <div
+              key={p.id}
+              className={`pick-item ${selected?.id === p.id ? 'active' : ''}`}
+              onClick={() => setSelected(p)}
+            >
+              <div className="pick-img">
+                {p.image && <img src={p.image} alt={p.name} />}
+              </div>
+              <div className="pick-info">
+                <p className="pick-name">{p.name}</p>
+                <p className="pick-price">
+                  ₹{(p.price || 0).toLocaleString('en-IN')}
+                </p>
+              </div>
+            </div>
+          ))}
+          {filteredProducts.length === 0 && (
+            <p style={{ color: '#aaa', fontStyle: 'italic', fontSize: 13, padding: '12px 0' }}>
+              No products found
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* RIGHT: badge editor */}
+      <div className="card desc-editor">
+        {!selected ? (
+          <div className="desc-no-selection">
+            <p>No product selected</p>
+            <span>Pick a product from the left to edit its trust badges</span>
+          </div>
+        ) : (
+          <>
+            <p className="desc-editor-title">{selected.name}</p>
+            <p className="desc-editor-sub" style={{ marginBottom: 18 }}>
+              4 trust badge slots shown in a 2×2 grid on the product page.
+            </p>
+
+            {/* Live 2x2 preview matching client layout */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 14,
+              padding: 16,
+              background: '#f9f7f3',
+              borderRadius: 10,
+              borderTop: '1px solid #f0ece6',
+              marginBottom: 22,
+            }}>
+              {badges.map((b, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>{ICON_PREVIEW[b.iconKey] || '✦'}</span>
+                  <div>
+                    <div style={{
+                      fontFamily: 'Jost,sans-serif', fontSize: 13,
+                      fontWeight: 600, color: '#1a1a1a',
+                    }}>
+                      {b.label || '—'}
+                    </div>
+                    <div style={{
+                      fontFamily: 'Jost,sans-serif', fontSize: 11, color: '#888',
+                    }}>
+                      {b.sub || '—'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Edit each badge */}
+            {badges.map((badge, idx) => (
+              <div key={idx} style={{
+                border: '1px solid #e8e5e0',
+                borderRadius: 10,
+                padding: 16,
+                marginBottom: 12,
+                background: '#fff',
+              }}>
+                <p className="field-label" style={{ marginBottom: 10 }}>
+                  Badge {idx + 1}
+                  <span style={{
+                    marginLeft: 8, fontSize: 16,
+                    verticalAlign: 'middle',
+                  }}>
+                    {ICON_PREVIEW[badge.iconKey] || '?'}
+                  </span>
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="form-field">
+                    <label className="field-label" style={{ fontSize: 9 }}>Icon</label>
+                    <select
+                      className="field-input"
+                      value={badge.iconKey || 'truck'}
+                      onChange={e => updateBadge(idx, 'iconKey', e.target.value)}
+                    >
+                      {BADGE_ICON_OPTIONS.map(o => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label className="field-label" style={{ fontSize: 9 }}>Bold Label *</label>
+                    <input
+                      className="field-input"
+                      value={badge.label || ''}
+                      onChange={e => updateBadge(idx, 'label', e.target.value)}
+                      placeholder="e.g. Free Shipping"
+                    />
+                  </div>
+                  <div className="form-field" style={{ gridColumn: '1 / -1' }}>
+                    <label className="field-label" style={{ fontSize: 9 }}>Sub Text (grey)</label>
+                    <input
+                      className="field-input"
+                      value={badge.sub || ''}
+                      onChange={e => updateBadge(idx, 'sub', e.target.value)}
+                      placeholder="e.g. On orders above ₹999"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 8, paddingTop: 16, borderTop: '1px solid #f0ece6' }}>
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save Badges'}
+              </button>
+              <button className="btn-secondary" onClick={handleReset} disabled={saving}>
+                Reset to Defaults
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ────────── MAIN COMPONENT ────────── */
 export default function ContentManager() {
   const [tab, setTab] = useState('descriptions');
@@ -378,9 +639,14 @@ export default function ContentManager() {
         <button className={`cm-tab ${tab === 'reviews' ? 'active' : ''}`} onClick={() => setTab('reviews')}>
           Reviews
         </button>
+        <button className={`cm-tab ${tab === 'badges' ? 'active' : ''}`} onClick={() => setTab('badges')}>
+          Trust Badges
+        </button>
       </div>
 
-      {tab === 'descriptions' ? <DescriptionsTab products={allProds} /> : <ReviewsTab />}
+      {tab === 'descriptions' && <DescriptionsTab products={allProds} />}
+      {tab === 'reviews' && <ReviewsTab />}
+      {tab === 'badges' && <BadgesTab products={allProds} />}
     </div>
   );
 }
