@@ -63,16 +63,19 @@ export default function CouponManager() {
 
     setSaving(true);
     try {
+      const existingCoupon = editId ? coupons.find(c => c.id === editId) : null;
+
       const data = {
-        code: code,
+        code,
         discountPercent: Number(form.discountPercent),
         minOrder: Number(form.minOrder) || 0,
-        active: form.active,
+        active: form.active !== false,
         label: form.label.trim() || `${form.discountPercent}% off`,
         maxUses: form.maxUses ? Number(form.maxUses) : null,
+        uses: existingCoupon?.uses || 0,
         ...(form.expiresAt ? { expiresAt: new Date(form.expiresAt) } : { expiresAt: null }),
         updatedAt: serverTimestamp(),
-        ...(!editId && { createdAt: serverTimestamp() }),
+        ...(!editId ? { createdAt: serverTimestamp() } : {}),
       };
 
       // Document ID = coupon code (so client can look it up directly)

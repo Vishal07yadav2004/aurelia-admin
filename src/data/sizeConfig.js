@@ -69,7 +69,22 @@ export const getSizeConfig = (category) => {
   return SIZE_CONFIG[category?.toLowerCase()] || SIZE_CONFIG.default;
 };
 
+export const getStockForSelection = (product, size = '') => {
+  if (!product) return 0;
+
+  if (product.hasSize !== false && product.sizeStock && size) {
+    const value = product.sizeStock[size];
+
+    if (value === false) return 0;
+    if (value === true) return Number(product.quantity) || 0;
+    if (value === undefined || value === null || value === '') return Number(product.quantity) || 0;
+
+    return Math.max(0, Number(value) || 0);
+  }
+
+  return Math.max(0, Number(product.quantity) || 0);
+};
+
 export const isSizeInStock = (product, size) => {
-  if (!product.sizeStock) return true;
-  return product.sizeStock[size] !== false;
+  return getStockForSelection(product, size) > 0;
 };

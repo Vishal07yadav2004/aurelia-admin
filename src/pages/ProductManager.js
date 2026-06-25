@@ -139,23 +139,67 @@ export default function ProductManager() {
     });
   };
 
-  const toggleSizeStock = (size) => {
+  // ── Numeric per-size stock helpers ──
+  const getStockValue = (value) => {
+    if (value === false) return 0;
+    if (value === true || value === undefined || value === null || value === '') return '';
+    return Number(value) || 0;
+  };
+
+  const updateSizeStock = (size, value) => {
+    const stock = Math.max(0, Number(value) || 0);
+
     setForm(f => ({
       ...f,
-      sizeStock: { ...f.sizeStock, [size]: f.sizeStock[size] === false ? true : false },
+      sizeStock: {
+        ...f.sizeStock,
+        [size]: stock,
+      },
     }));
+  };
+
+  const markSizeOutOfStock = (size) => {
+    setForm(f => ({
+      ...f,
+      sizeStock: {
+        ...f.sizeStock,
+        [size]: 0,
+      },
+    }));
+  };
+
+  // Compatibility toggle (still used for quick toggling) — now sets a numeric quantity
+  const toggleSizeStock = (size) => {
+    setForm(f => {
+      const current = getStockValue(f.sizeStock?.[size]);
+      const fallbackQty = Number(f.quantity) || 1;
+
+      return {
+        ...f,
+        sizeStock: {
+          ...f.sizeStock,
+          [size]: current > 0 ? 0 : fallbackQty,
+        },
+      };
+    });
   };
 
   const addCustomSize = () => {
     if (!newCustomSize.trim()) return;
     if ((form.customSizes || []).includes(newCustomSize.trim())) {
-      showToast('Size already exists', 'error'); return;
+      showToast('Size already exists', 'error');
+      return;
     }
+
     setForm(f => ({
       ...f,
       customSizes: [...(f.customSizes || []), newCustomSize.trim()],
-      sizeStock: { ...f.sizeStock, [newCustomSize.trim()]: true },
+      sizeStock: {
+        ...f.sizeStock,
+        [newCustomSize.trim()]: Number(f.quantity) || 1,
+      },
     }));
+
     setNewCustomSize('');
   };
 
@@ -201,6 +245,19 @@ export default function ProductManager() {
         : nextProductNum;
       const resolvedSKU = `SKU-${String(resolvedProductNum).padStart(3, '0')}`;
 
+      const normalisedSizeStock = Object.fromEntries(
+        Object.entries(form.sizeStock || {}).map(([size, value]) => {
+          if (value === false) return [size, 0];
+          if (value === true) return [size, Number(form.quantity) || 0];
+          return [size, Math.max(0, Number(value) || 0)];
+        })
+      );
+
+      const totalSizeStock = Object.values(normalisedSizeStock).reduce(
+        (sum, value) => sum + (Number(value) || 0),
+        0
+      );
+
       const productData = {
         name: form.name,
         price: Number(form.price),
@@ -211,9 +268,9 @@ export default function ProductManager() {
         images: validImages,
         image: validImages[0],
         video: form.video || '',
-        sizeStock: form.sizeStock || {},
+        sizeStock: normalisedSizeStock,
         customSizes: form.customSizes || [],
-        quantity: Number(form.quantity) || 0,
+        quantity: form.hasSize !== false ? totalSizeStock : Number(form.quantity) || 0,
         hasSize: form.hasSize !== false,
         sizeNote: form.sizeNote || '',
         variants: (form.variants || []).filter(v => v.name || (v.images || []).length > 0),
@@ -575,27 +632,67 @@ export default function ProductManager() {
                   ) : (
                     <>
                       <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>
-                        Standard Sizes — Click to Toggle In/Out of Stock
+                        Standard Sizes - Enter Available Stock
                       </label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
                         {sizeConfig.sizes.map(size => {
-                          const isOut = form.sizeStock[size] === false;
+                          const stock = getStockValue(form.sizeStock?.[size]);
+                          const isOut = Number(stock) <= 0;
+
                           return (
-                            <button key={size} type="button" onClick={() => toggleSizeStock(size)} style={{
-                              padding: '10px 18px',
+                            <div key={size} style={{
                               border: isOut ? '1.5px solid #e74c3c' : '1.5px solid #2d6a4f',
                               background: isOut ? '#fff5f5' : '#f0fdf4',
-                              color: isOut ? '#e74c3c' : '#2d6a4f',
-                              borderRadius: 100, fontFamily: 'Jost,sans-serif', fontSize: 13,
-                              fontWeight: 500, cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', gap: 6,
-                              textDecoration: isOut ? 'line-through' : 'none',
+                              borderRadius: 12,
+                              padding: 12,
                             }}>
-                              {isOut ? '✕' : <Check size={13} />} {size}
-                            </button>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <strong style={{
+                                  fontFamily: 'Jost,sans-serif',
+                                  fontSize: 13,
+                                  color: isOut ? '#e74c3c' : '#2d6a4f',
+                                }}>
+                                  {size}
+                                </strong>
+
+                                <button
+                                  type="button"
+                                  onClick={() => markSizeOutOfStock(size)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: '#e74c3c',
+                                    fontSize: 11,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  OOS
+                                </button>
+                              </div>
+
+                              <input
+                                className="field-input"
+                                type="number"
+                                min="0"
+                                placeholder="Stock"
+                                value={stock}
+                                onChange={e => updateSizeStock(size, e.target.value)}
+                              />
+
+                              <p style={{
+                                marginTop: 6,
+                                fontSize: 11,
+                                color: isOut ? '#e74c3c' : '#2d6a4f',
+                                fontFamily: 'Jost,sans-serif',
+                              }}>
+                                {isOut ? 'Out of stock' : `${stock} available`}
+                              </p>
+                            </div>
                           );
                         })}
                       </div>
+
                       <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>Add Custom Sizes</label>
                       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                         <input className="field-input" placeholder='e.g. 13, XXL'
@@ -607,20 +704,36 @@ export default function ProductManager() {
                         </button>
                       </div>
                       {(form.customSizes || []).length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                          {form.customSizes.map(size => (
-                            <div key={size} style={{
-                              display: 'flex', alignItems: 'center', gap: 6,
-                              padding: '8px 14px', border: '1.5px solid #2d6a4f',
-                              background: '#f0fdf4', borderRadius: 100,
-                            }}>
-                              <span style={{ fontSize: 13, color: '#2d6a4f' }}>{size}</span>
-                              <button type="button" onClick={() => removeCustomSize(size)}
-                                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', padding: 0 }}>
-                                <X size={13} />
-                              </button>
-                            </div>
-                          ))}
+                        <div>
+                          {(form.customSizes || []).map(size => {
+                            const stock = getStockValue(form.sizeStock?.[size]);
+
+                            return (
+                              <div key={size} style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 100px auto',
+                                gap: 8,
+                                alignItems: 'center',
+                                marginBottom: 8,
+                              }}>
+                                <span style={{ fontFamily: 'Jost,sans-serif', fontSize: 13 }}>
+                                  {size}
+                                </span>
+
+                                <input
+                                  className="field-input"
+                                  type="number"
+                                  min="0"
+                                  value={stock}
+                                  onChange={e => updateSizeStock(size, e.target.value)}
+                                />
+
+                                <button type="button" className="btn-secondary" onClick={() => removeCustomSize(size)}>
+                                  Remove
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </>
@@ -864,7 +977,10 @@ export default function ProductManager() {
               const pct = hasDiscount ? Math.round((1 - p.salePrice / p.price) * 100) : 0;
               const sc = getSizeConfig(p.category);
               const allProductSizes = [...sc.sizes, ...(p.customSizes || [])];
-              const outOfStockCount = allProductSizes.filter(s => p.sizeStock?.[s] === false).length;
+              const outOfStockCount = allProductSizes.filter(s => Number(p.sizeStock?.[s] || 0) <= 0).length;
+              const totalStock = p.hasSize !== false
+                ? allProductSizes.reduce((sum, s) => sum + (Number(p.sizeStock?.[s]) || 0), 0)
+                : Number(p.quantity) || 0;
 
               return (
                 <div
@@ -913,6 +1029,15 @@ export default function ProductManager() {
                             {outOfStockCount} OOS
                           </span>
                         )}
+                        <span style={{
+                          fontSize: 11,
+                          padding: '2px 10px',
+                          borderRadius: 100,
+                          background: totalStock > 0 ? '#f0fdf4' : '#fff0ee',
+                          color: totalStock > 0 ? '#2d6a4f' : '#e74c3c',
+                        }}>
+                          Stock: {totalStock}
+                        </span>
                       </div>
                     </div>
                     <div className="pq-price-col">
@@ -940,7 +1065,7 @@ export default function ProductManager() {
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {allProductSizes.map(size => {
-                          const isOut = p.sizeStock?.[size] === false;
+                          const isOut = Number(p.sizeStock?.[size] || 0) <= 0;
                           return (
                             <button key={size} onClick={() => quickToggleStock(p.id, size, isOut)} style={{
                               padding: '4px 10px', fontSize: 11,
