@@ -1,4 +1,79 @@
+﻿
+===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\App.js =====
 
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+import LoginPage from './pages/LoginPage';
+import Dashboard from './pages/Dashboard';
+import ProductManager from './pages/ProductManager';
+import CategoryManager from './pages/CategoryManager';
+import CarouselManager from './pages/CarouselManager';
+import ContentManager from './pages/ContentManager';
+import OrdersPage from './pages/OrdersPage';
+import FooterManager from './pages/FooterManager';
+import SaleBannerManager from './pages/SaleBannerManager';
+import HeroManager from './pages/HeroManager';
+import CouponManager from './pages/CouponManager';
+import CollectionManager from './pages/CollectionManager';
+import AnnouncementManager from './pages/AnnouncementManager';
+import './styles/global.css';
+
+export const ToastContext = React.createContext();
+
+export default function App() {
+  const [loggedIn, setLoggedIn] = useState(localStorage.getItem('aurelia_admin') === 'true');
+  const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ show: true, msg, type });
+    setTimeout(() => setToast(t => ({ ...t, show: false })), 3000);
+  };
+
+  if (!loggedIn) return (
+    <LoginPage onLogin={() => { localStorage.setItem('aurelia_admin', 'true'); setLoggedIn(true); }} />
+  );
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      <BrowserRouter>
+        <div className="app-shell">
+          <Sidebar onLogout={() => { localStorage.removeItem('aurelia_admin'); setLoggedIn(false); }} />
+          <main className="app-main">
+            <Routes>
+              <Route path="/"            element={<Navigate to="/dashboard" />} />
+              <Route path="/dashboard"   element={<Dashboard />} />
+              <Route path="/products"    element={<ProductManager />} />
+              <Route path="/categories"  element={<CategoryManager />} />
+              <Route path="/carousel"    element={<CarouselManager />} />
+              <Route path="/hero"        element={<HeroManager />} />
+              <Route path="/content"     element={<ContentManager />} />
+              <Route path="/orders"      element={<OrdersPage />} />
+              <Route path="/footer"      element={<FooterManager />} />
+              <Route path="/sale-banner" element={<SaleBannerManager />} />
+              <Route path="/coupons"     element={<CouponManager />} />
+              <Route path="/collections" element={<CollectionManager />} />
+              <Route path="/announcements" element={<AnnouncementManager />} />
+            </Routes>
+          </main>
+        </div>
+        <div className={`toast ${toast.type} ${toast.show ? 'show' : ''}`}>
+          {toast.type === 'success' ? 'âœ“' : 'âœ•'} &nbsp;{toast.msg}
+        </div>
+      </BrowserRouter>
+    </ToastContext.Provider>
+  );
+}
+
+===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\index.js =====
+
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './styles/global.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<React.StrictMode><App /></React.StrictMode>);
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\components\ImageCropper.css =====
 
@@ -53,7 +128,6 @@
 .cropper-preview-tile img { width:100%; height:100%; object-fit:cover; display:block; }
 .cropper-preview-thumb { width: 64px; height:64px; border-radius:8px; overflow:hidden; background:#edeae4; }
 .cropper-preview-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\components\ImageCropper.js =====
 
@@ -159,7 +233,7 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
     try {
       const url = await uploadToCloudinary(croppedPreview);
       onConfirm(url);
-      showToast('Image uploaded & ready ✓');
+      showToast('Image uploaded & ready âœ“');
     } catch (err) {
       console.error(err);
       showToast('Upload failed. Check Cloudinary config.', 'error');
@@ -175,16 +249,16 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
       try {
         const url = await uploadToCloudinary(src);
         onConfirm(url);
-        showToast('Original image uploaded ✓');
+        showToast('Original image uploaded âœ“');
       } catch (err) {
         console.error(err);
         showToast('Upload failed. Check Cloudinary config.', 'error');
       }
       setUploading(false);
     } else {
-      // Already a remote URL — use as-is
+      // Already a remote URL â€” use as-is
       onConfirm(src);
-      showToast('Original image used ✓');
+      showToast('Original image used âœ“');
     }
   };
 
@@ -205,14 +279,14 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
             textAlign: 'center', padding: '20px',
             fontFamily: 'Jost, sans-serif', fontSize: 13, color: '#666',
           }}>
-            <div style={{ marginBottom: 8 }}>⏳ Uploading to Cloudinary...</div>
+            <div style={{ marginBottom: 8 }}>â³ Uploading to Cloudinary...</div>
             <div style={{ fontSize: 11, color: '#aaa' }}>This may take a moment</div>
           </div>
         )}
 
         {!uploading && step === 'crop' && (
           <>
-            <p className="cropper-hint">Drag to reposition · Use controls to zoom/rotate</p>
+            <p className="cropper-hint">Drag to reposition Â· Use controls to zoom/rotate</p>
             <div
               className="cropper-stage"
               style={{ width: cropW, height: cropH }}
@@ -251,7 +325,7 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
                 <label className="cropper-ctrl-label"><RotateCw size={14} /> Rotate</label>
                 <input type="range" min="-180" max="180" step="1" value={rotation}
                   onChange={e => { setRotation(Number(e.target.value)); setTimeout(drawCanvas, 0); }} />
-                <span className="cropper-ctrl-val">{rotation}°</span>
+                <span className="cropper-ctrl-val">{rotation}Â°</span>
               </div>
               <div className="cropper-btn-row">
                 <button className="btn-secondary" onClick={() => {
@@ -261,7 +335,7 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
                   <ImageOff size={14} /> Use Original
                 </button>
                 <button className="btn-primary" onClick={handleCropNext}>
-                  <Check size={15} /> Preview →
+                  <Check size={15} /> Preview â†’
                 </button>
               </div>
             </div>
@@ -286,7 +360,7 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
               </div>
             </div>
             <div className="cropper-btn-row" style={{ marginTop: 20 }}>
-              <button className="btn-secondary" onClick={() => setStep('crop')}>← Back</button>
+              <button className="btn-secondary" onClick={() => setStep('crop')}>â† Back</button>
               <button className="btn-secondary" onClick={handleUseOriginal}>
                 <ImageOff size={14} /> Use Original
               </button>
@@ -301,10 +375,9 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\components\ImageDropzone.css =====
 
-/* ── DROP ZONE ── */
+/* â”€â”€ DROP ZONE â”€â”€ */
 .dropzone-wrapper {
   display: flex;
   flex-direction: column;
@@ -402,7 +475,7 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
   transition: background 0.2s;
 }
 .dz-cloudinary-btn:hover { background: #333; }
-/* ── MULTI-IMAGE GRID ── */
+/* â”€â”€ MULTI-IMAGE GRID â”€â”€ */
 .dz-multi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -462,7 +535,6 @@ export default function ImageCropper({ src, aspect = 1, onConfirm, onCancel }) {
   letter-spacing: 0.06em;
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\components\ImageDropzone.js =====
 
 import React, { useRef, useState, useContext } from 'react';
@@ -472,7 +544,7 @@ import ImageCropper from './ImageCropper';
 import './ImageDropzone.css';
 
 /**
- * ImageDropzone — supports multi-image upload
+ * ImageDropzone â€” supports multi-image upload
  *
  * Props:
  *   value      string | string[]   current image URL or array of URLs
@@ -527,12 +599,12 @@ export default function ImageDropzone({
       Promise.allSettled(readers).then(results => {
         const srcs = results.filter(r => r.status === 'fulfilled').map(r => r.value);
         if (!srcs.length) return;
-        // Start cropping queue — first item opens immediately, rest queue
+        // Start cropping queue â€” first item opens immediately, rest queue
         setCurrentCropSrc(srcs[0]);
         setCropQueue(srcs.slice(1));
       });
     } else {
-      // Single mode — just process first file
+      // Single mode â€” just process first file
       const file = valid[0];
       if (file.size > 15 * 1024 * 1024) { showToast('File too large (max 15MB)', 'error'); return; }
       const reader = new FileReader();
@@ -583,7 +655,7 @@ export default function ImageDropzone({
     if (multi) {
       // Add to images array
       onChange([...(images || []), croppedUrl]);
-      showToast('Image added ✓');
+      showToast('Image added âœ“');
       // Process next in queue if any
       if (cropQueue.length > 0) {
         const [next, ...rest] = cropQueue;
@@ -595,7 +667,7 @@ export default function ImageDropzone({
     } else {
       onChange(croppedUrl);
       setCurrentCropSrc(null);
-      showToast('Image cropped & ready ✓');
+      showToast('Image cropped & ready âœ“');
     }
   };
 
@@ -616,7 +688,7 @@ export default function ImageDropzone({
     onChange(images.filter((_, i) => i !== idx));
   };
 
-  // ── MULTI mode render ──
+  // â”€â”€ MULTI mode render â”€â”€
   if (multi) {
     return (
       <>
@@ -638,7 +710,7 @@ export default function ImageDropzone({
             </div>
           )}
 
-          {/* Add more — only show if under limit */}
+          {/* Add more â€” only show if under limit */}
           {images.length < maxFiles && (
             <div
               className={`dropzone ${dragOver ? 'drag-over' : ''}`}
@@ -651,7 +723,7 @@ export default function ImageDropzone({
               <div className="dropzone-content">
                 <Plus size={22} className="dropzone-icon" />
                 <p className="dropzone-label">Add images ({images.length}/{maxFiles})</p>
-                <p className="dropzone-sub">Select multiple at once · PNG, JPG · Max 15MB each</p>
+                <p className="dropzone-sub">Select multiple at once Â· PNG, JPG Â· Max 15MB each</p>
               </div>
             </div>
           )}
@@ -682,7 +754,7 @@ export default function ImageDropzone({
     );
   }
 
-  // ── SINGLE mode render (original behaviour) ──
+  // â”€â”€ SINGLE mode render (original behaviour) â”€â”€
   return (
     <>
       <div className="dropzone-wrapper">
@@ -713,7 +785,7 @@ export default function ImageDropzone({
             <div className="dropzone-content">
               <Upload size={30} className="dropzone-icon" />
               <p className="dropzone-label">Drop image here or click to browse</p>
-              <p className="dropzone-sub">Crop or use original · PNG, JPG · Max 15MB</p>
+              <p className="dropzone-sub">Crop or use original Â· PNG, JPG Â· Max 15MB</p>
             </div>
           )}
         </div>
@@ -736,14 +808,13 @@ export default function ImageDropzone({
         <ImageCropper
           src={currentCropSrc}
           aspect={aspect}
-          onConfirm={(croppedUrl) => { onChange(croppedUrl); setCurrentCropSrc(null); showToast('Image ready ✓'); }}
+          onConfirm={(croppedUrl) => { onChange(croppedUrl); setCurrentCropSrc(null); showToast('Image ready âœ“'); }}
           onCancel={() => setCurrentCropSrc(null)}
         />
       )}
     </>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\components\Sidebar.css =====
 
@@ -835,7 +906,7 @@ export default function ImageDropzone({
   background: rgba(255,255,255,0.05);
 }
 
-/* ── HAMBURGER (mobile only) ── */
+/* â”€â”€ HAMBURGER (mobile only) â”€â”€ */
 .hamburger-btn {
   display: none;
   position: fixed;
@@ -857,7 +928,7 @@ export default function ImageDropzone({
 .hamburger-btn.open span:nth-child(2) { opacity: 0; }
 .hamburger-btn.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
-/* ── MOBILE OVERLAY ── */
+/* â”€â”€ MOBILE OVERLAY â”€â”€ */
 .sidebar-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -867,7 +938,7 @@ export default function ImageDropzone({
 }
 @keyframes fadeOverlay { from { opacity: 0; } to { opacity: 1; } }
 
-/* ── RESPONSIVE ── */
+/* â”€â”€ RESPONSIVE â”€â”€ */
 @media (max-width: 768px) {
   .hamburger-btn { display: flex; }
   .sidebar-overlay { display: block; }
@@ -881,7 +952,6 @@ export default function ImageDropzone({
     box-shadow: 8px 0 40px rgba(0,0,0,0.4);
   }
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\components\Sidebar.js =====
 
@@ -946,16 +1016,14 @@ export default function Sidebar({ onLogout }) {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\data\products.js =====
 
-// Default fallback products — admin can override these from Firebase
+// Default fallback products â€” admin can override these from Firebase
 export const bestSellers = [];
 
 export const newArrivals = [];
 
 export const allProducts = [...bestSellers, ...newArrivals];
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\data\sizeConfig.js =====
 
@@ -1030,16 +1098,30 @@ export const getSizeConfig = (category) => {
   return SIZE_CONFIG[category?.toLowerCase()] || SIZE_CONFIG.default;
 };
 
-export const isSizeInStock = (product, size) => {
-  if (!product.sizeStock) return true;
-  return product.sizeStock[size] !== false;
+export const getStockForSelection = (product, size = '') => {
+  if (!product) return 0;
+
+  if (product.hasSize !== false && product.sizeStock && size) {
+    const value = product.sizeStock[size];
+
+    if (value === false) return 0;
+    if (value === true) return Number(product.quantity) || 0;
+    if (value === undefined || value === null || value === '') return Number(product.quantity) || 0;
+
+    return Math.max(0, Number(value) || 0);
+  }
+
+  return Math.max(0, Number(product.quantity) || 0);
 };
 
+export const isSizeInStock = (product, size) => {
+  return getStockForSelection(product, size) > 0;
+};
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\firebase\config.js =====
 
 // ============================================================
-//  SAME FIREBASE CONFIG AS CLIENT — use the exact same values
+//  SAME FIREBASE CONFIG AS CLIENT â€” use the exact same values
 //  Both admin and client connect to the same Firebase project
 //  so changes from admin appear instantly on the client website
 // ============================================================
@@ -1060,10 +1142,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
-export const auth = getAuth(app); // ✅ ADD THIS
+export const auth = getAuth(app); // âœ… ADD THIS
 
 export default app;
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\AnnouncementManager.css =====
 
@@ -1206,7 +1287,6 @@ export default app;
   .ann-form-grid { grid-template-columns: 1fr; }
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\AnnouncementManager.js =====
 
 import React, { useState, useEffect, useContext } from 'react';
@@ -1286,14 +1366,14 @@ export default function AnnouncementManager() {
     setSaving(true);
     await setDoc(doc(db, 'site', 'countdown_banner'), countdown);
     setSaving(false);
-    showToast('Countdown banner saved ✓');
+    showToast('Countdown banner saved âœ“');
   };
 
   const saveMarquee = async () => {
     setSaving(true);
     await setDoc(doc(db, 'site', 'marquee_banner'), marquee);
     setSaving(false);
-    showToast('Marquee banner saved ✓');
+    showToast('Marquee banner saved âœ“');
   };
 
   const addMarqueeItem = () => {
@@ -1446,7 +1526,7 @@ export default function AnnouncementManager() {
           <div className="ann-marquee-track">
             {[...marquee.items, ...marquee.items].map((item, i) => (
               <span key={i} className="ann-marquee-item">
-                <span className="ann-marquee-dash">—</span> {item}
+                <span className="ann-marquee-dash">â€”</span> {item}
               </span>
             ))}
           </div>
@@ -1509,7 +1589,6 @@ export default function AnnouncementManager() {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CarouselManager.css =====
 
 .carousel-manager { max-width: 1100px; }
@@ -1523,7 +1602,6 @@ export default function AnnouncementManager() {
 .slide-remove-btn { background:none; border:1px solid #f0ddd8; color:#ccc; width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; }
 .slide-remove-btn:hover { background:#fff0ee; border-color:#e74c3c; color:#e74c3c; }
 .form-field { display:flex; flex-direction:column; gap:6px; }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CarouselManager.js =====
 
@@ -1573,7 +1651,7 @@ export default function CarouselManager() {
     setCarousels(c => ({ ...c, [key]: slides }));
     await setDoc(doc(db, 'site', key), { slides });
     setSaving(s => ({ ...s, [key]: false }));
-    showToast('Carousel updated — live on client! ✓');
+    showToast('Carousel updated â€” live on client! âœ“');
   };
 
   const updateSlide = (key, idx, field, val) => {
@@ -1586,7 +1664,7 @@ export default function CarouselManager() {
     const updated = [...carousels[key]];
     updated[idx] = { ...updated[idx], [field]: val };
     await setDoc(doc(db, 'site', key), { slides: updated });
-    showToast('Updated ✓');
+    showToast('Updated âœ“');
   };
 
   const addSlide  = (key) => saveCarousel(key, [...carousels[key], { ...EMPTY_SLIDE }]);
@@ -1595,7 +1673,7 @@ export default function CarouselManager() {
     saveCarousel(key, carousels[key].filter((_,i) => i !== idx));
   };
 
-  const LABELS = { carousel_1: 'Carousel 1 — Row 1 Feature Panel', carousel_2: 'Carousel 2 — Row 2 Feature Panel' };
+  const LABELS = { carousel_1: 'Carousel 1 â€” Row 1 Feature Panel', carousel_2: 'Carousel 2 â€” Row 2 Feature Panel' };
 
   return (
     <div className="carousel-manager">
@@ -1656,12 +1734,11 @@ export default function CarouselManager() {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CategoryManager.css =====
 
 .cat-manager { max-width: 1100px; }
 
-/* ── Add Form ── */
+/* â”€â”€ Add Form â”€â”€ */
 .cat-add-card { margin-bottom: 20px; }
 
 .form-title {
@@ -1693,7 +1770,7 @@ export default function CarouselManager() {
   line-height: 1.7;
 }
 
-/* ── Sections ── */
+/* â”€â”€ Sections â”€â”€ */
 .cat-section { margin-bottom: 32px; }
 
 .section-heading {
@@ -1707,7 +1784,7 @@ export default function CarouselManager() {
   font-size: 13px; font-weight: 400; color: #aaa;
 }
 
-/* ── Tiles Grid ── */
+/* â”€â”€ Tiles Grid â”€â”€ */
 .cat-tiles {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1717,7 +1794,7 @@ export default function CarouselManager() {
   transition: transform 0.2s, opacity 0.2s;
 }
 
-/* ── Individual Tile ── */
+/* â”€â”€ Individual Tile â”€â”€ */
 .cat-tile {
   display: flex; flex-direction: column; gap: 10px;
   padding: 14px;
@@ -1885,7 +1962,6 @@ export default function CarouselManager() {
   .cat-add-layout { grid-template-columns: 1fr; }
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CategoryManager.js =====
 
 import React, { useState, useEffect, useContext, useRef } from 'react';
@@ -1965,7 +2041,7 @@ export default function CategoryManager() {
     await saveRow(newCat.targetRow, [...(rows[newCat.targetRow] || []), newItem]);
     setNewCat(EMPTY_NEW);
     setShowAdd(false);
-    showToast('Category added — live on client! 🚀');
+    showToast('Category added â€” live on client! ðŸš€');
   };
 
   const updateLabel = async (docId, idx, newLabel) => {
@@ -1973,7 +2049,7 @@ export default function CategoryManager() {
     const updated = [...rows[docId]];
     updated[idx] = { ...updated[idx], label: newLabel.trim() };
     await saveRow(docId, updated);
-    showToast('Label updated ✓');
+    showToast('Label updated âœ“');
   };
 
   const updateImage = async (docId, idx, newUrl) => {
@@ -1981,7 +2057,7 @@ export default function CategoryManager() {
     const updated = [...rows[docId]];
     updated[idx] = { ...updated[idx], image: newUrl };
     await saveRow(docId, updated);
-    showToast('Image updated ✓');
+    showToast('Image updated âœ“');
   };
 
   const deleteCategory = async (docId, idx) => {
@@ -1991,7 +2067,7 @@ export default function CategoryManager() {
     showToast('Category removed');
   };
 
-  // ── DIRECT CLOUDINARY UPLOAD (no cropping) ──
+  // â”€â”€ DIRECT CLOUDINARY UPLOAD (no cropping) â”€â”€
   const uploadImageDirect = async (file, catId, rowKey, idx) => {
     if (!file?.type.startsWith('image/')) {
       showToast('Please select an image file', 'error');
@@ -2029,7 +2105,7 @@ export default function CategoryManager() {
     }
   };
 
-  // ── DRAG & DROP ──
+  // â”€â”€ DRAG & DROP â”€â”€
   const handleDragStart = (e, rowId, idx) => {
     dragItem.current = { rowId, idx };
     setDragging(true);
@@ -2062,7 +2138,7 @@ export default function CategoryManager() {
     const from = dragItem.current;
     const to = dragOverItem.current;
 
-    // Same position — nothing to do
+    // Same position â€” nothing to do
     if (from.rowId === to.rowId && from.idx === to.idx) {
       dragItem.current = null;
       dragOverItem.current = null;
@@ -2081,7 +2157,7 @@ export default function CategoryManager() {
     newRows[to.rowId].splice(to.idx, 0, movedItem);
 
     await saveBothRows(newRows);
-    showToast('Categories reordered ✓');
+    showToast('Categories reordered âœ“');
 
     dragItem.current = null;
     dragOverItem.current = null;
@@ -2098,14 +2174,14 @@ export default function CategoryManager() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Categories</h1>
-          <p className="page-sub">Add, rename, or remove categories. Drag to reorder — changes are live instantly.</p>
+          <p className="page-sub">Add, rename, or remove categories. Drag to reorder â€” changes are live instantly.</p>
         </div>
         <button className="btn-primary" onClick={() => setShowAdd(!showAdd)}>
           {showAdd ? <><X size={15}/> Cancel</> : <><Plus size={15}/> Add Category</>}
         </button>
       </div>
 
-      {/* ── ADD FORM ── */}
+      {/* â”€â”€ ADD FORM â”€â”€ */}
       {showAdd && (
         <div className="card cat-add-card">
           <h3 className="form-title"><Plus size={17}/> New Category</h3>
@@ -2130,8 +2206,8 @@ export default function CategoryManager() {
                 <label className="field-label">Add to Row</label>
                 <select className="field-input" value={newCat.targetRow}
                   onChange={e => setNewCat({...newCat, targetRow: e.target.value})}>
-                  <option value="categories_row1">Row 1 — Main</option>
-                  <option value="categories_row2">Row 2 — More</option>
+                  <option value="categories_row1">Row 1 â€” Main</option>
+                  <option value="categories_row2">Row 2 â€” More</option>
                 </select>
               </div>
               <button className="btn-primary" type="button" onClick={handleAdd} style={{ marginTop: 4 }}>
@@ -2143,17 +2219,17 @@ export default function CategoryManager() {
       )}
 
       <p className="cat-note">
-        💡 First 4 per row show on the homepage grid. All categories appear as Shop page filters.
-        The <strong>ID</strong> is permanent — it links products to this category.
+        ðŸ’¡ First 4 per row show on the homepage grid. All categories appear as Shop page filters.
+        The <strong>ID</strong> is permanent â€” it links products to this category.
         You can freely rename the <strong>label</strong>.
         <br/><br/>
-        🖐️ <strong>Drag & drop</strong> tiles to reorder within a row or move between rows.
+        ðŸ–ï¸ <strong>Drag & drop</strong> tiles to reorder within a row or move between rows.
       </p>
 
-      {/* ── ROWS ── */}
+      {/* â”€â”€ ROWS â”€â”€ */}
       {[
-        { key: 'categories_row1', title: 'Row 1 — Main Categories' },
-        { key: 'categories_row2', title: 'Row 2 — More Categories' },
+        { key: 'categories_row1', title: 'Row 1 â€” Main Categories' },
+        { key: 'categories_row2', title: 'Row 2 â€” More Categories' },
       ].map(({ key, title }) => (
         <div key={key} className="cat-section">
           <h3 className="section-heading">
@@ -2176,7 +2252,7 @@ export default function CategoryManager() {
                   <GripVertical size={16} />
                 </div>
 
-                {/* Image — direct upload, no cropping */}
+                {/* Image â€” direct upload, no cropping */}
                 <div className="cat-image-upload">
                   {cat.image ? (
                     <div className="cat-image-preview">
@@ -2253,7 +2329,6 @@ export default function CategoryManager() {
     </div>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CollectionManager.css =====
 
@@ -2424,14 +2499,13 @@ export default function CategoryManager() {
   font-family: 'Jost', sans-serif; font-size: 13px; color: #555;
   line-height: 1.6; padding-left: 16px; position: relative;
 }
-.cm-info-list li::before { content: '→'; position: absolute; left: 0; color: #aaa; }
+.cm-info-list li::before { content: 'â†’'; position: absolute; left: 0; color: #aaa; }
 
 @media (max-width: 768px) {
   .cm-form-grid { grid-template-columns: 1fr; }
   .cm-card { flex-direction: column; align-items: flex-start; }
   .cm-card-actions { width: 100%; justify-content: flex-end; }
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CollectionManager.js =====
 
@@ -2443,14 +2517,14 @@ import { Plus, Trash2, X, Pencil, GripVertical, Eye } from 'lucide-react';
 import './CollectionManager.css';
 
 const DEFAULT_COLLECTIONS = [
-  { id: 'bestSellers', title: 'Best Sellers', subtitle: 'Our most loved pieces by customers', link: '/shop?section=bestSellers', tag: 'POPULAR', icon: '⭐', active: true },
-  { id: 'newArrivals', title: 'New Arrivals', subtitle: 'Fresh additions to our collection', link: '/shop?section=newArrivals', tag: 'NEW', icon: '✨', active: true },
-  { id: 'under99', title: 'Under ₹99', subtitle: 'Affordable elegance for every budget', link: '/shop?maxPrice=99', tag: 'BUDGET', icon: '💎', active: true },
-  { id: 'r99to199', title: '₹99 – ₹199', subtitle: 'Beautiful pieces at great value', link: '/shop?minPrice=99&maxPrice=199', tag: 'VALUE', icon: '💍', active: true },
-  { id: 'r199to299', title: '₹199 – ₹299', subtitle: 'Premium craftsmanship, mid-range prices', link: '/shop?minPrice=199&maxPrice=299', tag: 'MID-RANGE', icon: '👑', active: true },
-  { id: 'r299to399', title: '₹299 – ₹399', subtitle: 'Luxury pieces for special occasions', link: '/shop?minPrice=299&maxPrice=399', tag: 'PREMIUM', icon: '🌟', active: true },
-  { id: 'above499', title: '₹499 & Above', subtitle: 'Exclusive high-end fine jewellery', link: '/shop?minPrice=499', tag: 'LUXURY', icon: '♛', active: true },
-  { id: 'onSale', title: 'On Sale', subtitle: 'Grab the best deals — limited time offers', link: '/shop?sale=true', tag: 'SALE', icon: '🏷', active: true },
+  { id: 'bestSellers', title: 'Best Sellers', subtitle: 'Our most loved pieces by customers', link: '/shop?section=bestSellers', tag: 'POPULAR', icon: 'â­', active: true },
+  { id: 'newArrivals', title: 'New Arrivals', subtitle: 'Fresh additions to our collection', link: '/shop?section=newArrivals', tag: 'NEW', icon: 'âœ¨', active: true },
+  { id: 'under99', title: 'Under â‚¹99', subtitle: 'Affordable elegance for every budget', link: '/shop?maxPrice=99', tag: 'BUDGET', icon: 'ðŸ’Ž', active: true },
+  { id: 'r99to199', title: 'â‚¹99 â€“ â‚¹199', subtitle: 'Beautiful pieces at great value', link: '/shop?minPrice=99&maxPrice=199', tag: 'VALUE', icon: 'ðŸ’', active: true },
+  { id: 'r199to299', title: 'â‚¹199 â€“ â‚¹299', subtitle: 'Premium craftsmanship, mid-range prices', link: '/shop?minPrice=199&maxPrice=299', tag: 'MID-RANGE', icon: 'ðŸ‘‘', active: true },
+  { id: 'r299to399', title: 'â‚¹299 â€“ â‚¹399', subtitle: 'Luxury pieces for special occasions', link: '/shop?minPrice=299&maxPrice=399', tag: 'PREMIUM', icon: 'ðŸŒŸ', active: true },
+  { id: 'above499', title: 'â‚¹499 & Above', subtitle: 'Exclusive high-end fine jewellery', link: '/shop?minPrice=499', tag: 'LUXURY', icon: 'â™›', active: true },
+  { id: 'onSale', title: 'On Sale', subtitle: 'Grab the best deals â€” limited time offers', link: '/shop?sale=true', tag: 'SALE', icon: 'ðŸ·', active: true },
 ];
 
 const LINK_TYPES = [
@@ -2461,13 +2535,13 @@ const LINK_TYPES = [
   { value: 'custom', label: 'Custom URL' },
 ];
 
-const ICON_OPTIONS = ['⭐', '✨', '💎', '💍', '👑', '🌟', '♛', '🏷', '🎁', '💝', '🔥', '✦', '♥', '🌸', '💫', '🎀'];
+const ICON_OPTIONS = ['â­', 'âœ¨', 'ðŸ’Ž', 'ðŸ’', 'ðŸ‘‘', 'ðŸŒŸ', 'â™›', 'ðŸ·', 'ðŸŽ', 'ðŸ’', 'ðŸ”¥', 'âœ¦', 'â™¥', 'ðŸŒ¸', 'ðŸ’«', 'ðŸŽ€'];
 
 const EMPTY_COLLECTION = {
   title: '',
   subtitle: '',
   tag: '',
-  icon: '✨',
+  icon: 'âœ¨',
   link: '',
   active: true,
   linkType: 'custom',
@@ -2515,7 +2589,7 @@ export default function CollectionManager() {
     setCollections(items);
     await setDoc(doc(db, 'site', 'collections_page'), { items });
     setSaving(false);
-    showToast('Collections updated — live on client! ✓');
+    showToast('Collections updated â€” live on client! âœ“');
   };
 
   // Build the link from form fields
@@ -2566,7 +2640,7 @@ export default function CollectionManager() {
     if (!form.tag.trim()) { showToast('Enter a tag label', 'error'); return; }
 
     const newItem = {
-      id: form.title.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9₹-]/g, ''),
+      id: form.title.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9â‚¹-]/g, ''),
       title: form.title.trim(),
       subtitle: form.subtitle.trim(),
       tag: form.tag.trim().toUpperCase(),
@@ -2652,7 +2726,7 @@ export default function CollectionManager() {
               <label className="field-label">Title *</label>
               <input className="field-input" value={form.title}
                 onChange={e => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. Under ₹99" />
+                placeholder="e.g. Under â‚¹99" />
             </div>
 
             <div className="form-field">
@@ -2708,13 +2782,13 @@ export default function CollectionManager() {
             {form.linkType === 'price' && (
               <div style={{ display: 'flex', gap: 14 }}>
                 <div className="form-field" style={{ flex: 1 }}>
-                  <label className="field-label">Min Price (₹)</label>
+                  <label className="field-label">Min Price (â‚¹)</label>
                   <input className="field-input" type="number" value={form.minPrice}
                     onChange={e => setForm({ ...form, minPrice: e.target.value })}
                     placeholder="0" />
                 </div>
                 <div className="form-field" style={{ flex: 1 }}>
-                  <label className="field-label">Max Price (₹)</label>
+                  <label className="field-label">Max Price (â‚¹)</label>
                   <input className="field-input" type="number" value={form.maxPrice}
                     onChange={e => setForm({ ...form, maxPrice: e.target.value })}
                     placeholder="Leave empty for no max" />
@@ -2744,7 +2818,7 @@ export default function CollectionManager() {
 
             {form.linkType === 'sale' && (
               <p style={{ fontSize: 12, color: '#2d6a4f', fontStyle: 'italic' }}>
-                ✓ This will show only products with active discounts
+                âœ“ This will show only products with active discounts
               </p>
             )}
           </div>
@@ -2757,7 +2831,7 @@ export default function CollectionManager() {
               <span className="cm-preview-tag">{form.tag || 'TAG'}</span>
               <p className="cm-preview-title">{form.title || 'Collection Title'}</p>
               <p className="cm-preview-sub">{form.subtitle || 'Description goes here'}</p>
-              <span className="cm-preview-link">Explore →</span>
+              <span className="cm-preview-link">Explore â†’</span>
             </div>
           </div>
 
@@ -2782,9 +2856,9 @@ export default function CollectionManager() {
             <div className={`cm-card card ${!col.active ? 'cm-card-inactive' : ''}`} key={col.id || idx}>
               <div className="cm-card-left">
                 <div className="cm-card-order">
-                  <button className="cm-order-btn" onClick={() => moveUp(idx)} disabled={idx === 0}>↑</button>
+                  <button className="cm-order-btn" onClick={() => moveUp(idx)} disabled={idx === 0}>â†‘</button>
                   <span className="cm-order-num">{idx + 1}</span>
-                  <button className="cm-order-btn" onClick={() => moveDown(idx)} disabled={idx === collections.length - 1}>↓</button>
+                  <button className="cm-order-btn" onClick={() => moveDown(idx)} disabled={idx === collections.length - 1}>â†“</button>
                 </div>
                 <span className="cm-card-icon">{col.icon}</span>
                 <div className="cm-card-info">
@@ -2800,7 +2874,7 @@ export default function CollectionManager() {
               <div className="cm-card-actions">
                 <button className="cm-action-btn toggle-btn" onClick={() => toggleActive(idx)}
                   title={col.active ? 'Hide' : 'Show'}>
-                  {col.active ? <Eye size={14} /> : '👁‍🗨'}
+                  {col.active ? <Eye size={14} /> : 'ðŸ‘â€ðŸ—¨'}
                 </button>
                 <button className="cm-action-btn edit-btn" onClick={() => handleEdit(idx)} title="Edit">
                   <Pencil size={13} />
@@ -2823,7 +2897,7 @@ export default function CollectionManager() {
           <li><strong>Price Range</strong> type filters products by their price automatically</li>
           <li><strong>On Sale</strong> shows only products with active discounts</li>
           <li><strong>Category</strong> links to a specific product category</li>
-          <li>Use the ↑↓ arrows to reorder how cards appear on the client site</li>
+          <li>Use the â†‘â†“ arrows to reorder how cards appear on the client site</li>
           <li>Toggle the eye icon to hide/show a collection without deleting it</li>
         </ul>
       </div>
@@ -2831,12 +2905,11 @@ export default function CollectionManager() {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\ContentManager.css =====
 
 .content-manager { max-width: 1100px; }
 
-/* ── TABS ── */
+/* â”€â”€ TABS â”€â”€ */
 .cm-tabs {
   display: flex; gap: 0;
   border-bottom: 2px solid #f0ece6;
@@ -2851,7 +2924,7 @@ export default function CollectionManager() {
 }
 .cm-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
 
-/* ── PRODUCT DESCRIPTION SECTION ── */
+/* â”€â”€ PRODUCT DESCRIPTION SECTION â”€â”€ */
 .desc-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -2904,7 +2977,7 @@ export default function CollectionManager() {
 }
 .pick-price { font-size: 12px; color: #aaa; margin-top: 2px; }
 
-/* ── DESCRIPTION EDITOR ── */
+/* â”€â”€ DESCRIPTION EDITOR â”€â”€ */
 .desc-editor { }
 .desc-editor-title {
   font-family: 'Cormorant Garamond', serif;
@@ -2960,7 +3033,7 @@ export default function CollectionManager() {
 .desc-no-selection p { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #ccc; }
 .desc-no-selection span { font-size: 13px; color: #ddd; }
 
-/* ── REVIEWS SECTION ── */
+/* â”€â”€ REVIEWS SECTION â”€â”€ */
 .reviews-manager { }
 
 .reviews-grid-admin {
@@ -3027,7 +3100,7 @@ export default function CollectionManager() {
 .review-form-star:hover { transform: scale(1.15); }
 .review-form-actions { display: flex; gap: 10px; margin-top: 16px; }
 
-/* ── Mobile ── */
+/* â”€â”€ Mobile â”€â”€ */
 @media (max-width: 900px) {
   .desc-layout { grid-template-columns: 1fr; }
   .product-picker { position: static; }
@@ -3035,7 +3108,6 @@ export default function CollectionManager() {
   .review-form-grid { grid-template-columns: 1fr; }
   .reviews-grid-admin { grid-template-columns: 1fr; }
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\ContentManager.js =====
 
@@ -3050,7 +3122,7 @@ import { Pencil, Trash2, Plus, X, Star } from 'lucide-react';
 import { allProducts } from '../data/products';
 import './ContentManager.css';
 
-/* ────────── PRODUCT DESCRIPTIONS ────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ PRODUCT DESCRIPTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function DescriptionsTab({ products }) {
   const { showToast } = useContext(ToastContext);
   const [selected, setSelected] = useState(null);
@@ -3090,7 +3162,7 @@ function DescriptionsTab({ products }) {
         care:     form.care,
         shipping: form.shipping,
       });
-      showToast('Descriptions saved — live instantly! ✓');
+      showToast('Descriptions saved â€” live instantly! âœ“');
     } catch {
       showToast('Error saving', 'error');
     }
@@ -3209,7 +3281,7 @@ function DescriptionsTab({ products }) {
   );
 }
 
-/* ────────── REVIEWS ────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ REVIEWS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const EMPTY_REVIEW = { name: '', location: '', text: '', stars: 5 };
 
 function ReviewsTab() {
@@ -3243,12 +3315,12 @@ function ReviewsTab() {
       };
       if (editId) {
         await updateDoc(doc(db, 'reviews', editId), data);
-        showToast('Review updated ✓');
+        showToast('Review updated âœ“');
         setEditId(null);
       } else {
         const maxOrder = reviews.reduce((m, r) => Math.max(m, r.order || 0), 0);
         await addDoc(collection(db, 'reviews'), { ...data, order: maxOrder + 1, createdAt: serverTimestamp() });
-        showToast('Review added — live instantly! 🚀');
+        showToast('Review added â€” live instantly! ðŸš€');
       }
       setForm(EMPTY_REVIEW);
       setShowForm(false);
@@ -3280,7 +3352,7 @@ function ReviewsTab() {
       <div className="page-header" style={{ marginBottom: 16 }}>
         <div>
           <p style={{ fontSize: 13, color: '#999' }}>
-            {reviews.length} review{reviews.length !== 1 ? 's' : ''} · Changes are live instantly
+            {reviews.length} review{reviews.length !== 1 ? 's' : ''} Â· Changes are live instantly
           </p>
         </div>
         <button className="btn-primary" onClick={() => { setShowForm(!showForm); if (showForm) cancelEdit(); }}>
@@ -3305,7 +3377,7 @@ function ReviewsTab() {
                   type="button"
                   className={`review-form-star ${n <= form.stars ? 'lit' : ''}`}
                   onClick={() => setForm({ ...form, stars: n })}
-                >★</button>
+                >â˜…</button>
               ))}
             </div>
           </div>
@@ -3347,7 +3419,7 @@ function ReviewsTab() {
       {reviews.length === 0 ? (
         <div className="card" style={{ padding: 48, textAlign: 'center' }}>
           <p style={{ color: '#aaa', fontStyle: 'italic', fontSize: 14 }}>
-            No reviews yet. Add reviews above — they'll appear live on the homepage.
+            No reviews yet. Add reviews above â€” they'll appear live on the homepage.
           </p>
         </div>
       ) : (
@@ -3357,7 +3429,7 @@ function ReviewsTab() {
               <div className="review-card-top">
                 <div className="review-stars-row">
                   {[1,2,3,4,5].map(n => (
-                    <span key={n} style={{ fontSize: 14, color: n <= (r.stars||5) ? '#1a1a1a' : '#ddd' }}>★</span>
+                    <span key={n} style={{ fontSize: 14, color: n <= (r.stars||5) ? '#1a1a1a' : '#ddd' }}>â˜…</span>
                   ))}
                 </div>
                 <div className="review-card-actions">
@@ -3382,16 +3454,16 @@ function ReviewsTab() {
   );
 }
 
-/* ────────── TRUST BADGES ────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ TRUST BADGES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const BADGE_ICON_OPTIONS = [
-  { value: 'truck',   label: '🚚 Truck — Free Shipping'  },
-  { value: 'returns', label: '↩ Returns arrow'           },
-  { value: 'shield',  label: '🛡 Shield — Authentic'     },
-  { value: 'cod',     label: '💳 Card — COD Available'   },
+  { value: 'truck',   label: 'ðŸšš Truck â€” Free Shipping'  },
+  { value: 'returns', label: 'â†© Returns arrow'           },
+  { value: 'shield',  label: 'ðŸ›¡ Shield â€” Authentic'     },
+  { value: 'cod',     label: 'ðŸ’³ Card â€” COD Available'   },
 ];
 
 const DEFAULT_BADGES_ADMIN = [
-  { iconKey: 'truck',   label: 'Free Shipping', sub: 'On orders above ₹999' },
+  { iconKey: 'truck',   label: 'Free Shipping', sub: 'On orders above â‚¹999' },
   { iconKey: 'returns', label: 'Easy Returns',  sub: '7-day return policy'   },
   { iconKey: 'shield',  label: 'Authentic',     sub: 'Certified jewellery'   },
   { iconKey: 'cod',     label: 'COD Available', sub: 'Pay on delivery'       },
@@ -3460,7 +3532,7 @@ function BadgesTab({ products }) {
           })),
         }
       );
-      showToast('Trust badges saved ✓');
+      showToast('Trust badges saved âœ“');
     } catch (err) {
       console.error('Save badges error:', err);
       showToast(`Error: ${err.message}`, 'error');
@@ -3477,7 +3549,7 @@ function BadgesTab({ products }) {
           doc(db, 'productBadges', String(selected.id)),
           { badges: DEFAULT_BADGES_ADMIN }
         );
-        showToast('Badges reset to defaults ✓');
+        showToast('Badges reset to defaults âœ“');
       } catch (err) {
         console.error(err);
       }
@@ -3488,7 +3560,7 @@ function BadgesTab({ products }) {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const ICON_PREVIEW = { truck: '🚚', returns: '↩', shield: '🛡', cod: '💳' };
+  const ICON_PREVIEW = { truck: 'ðŸšš', returns: 'â†©', shield: 'ðŸ›¡', cod: 'ðŸ’³' };
 
   return (
     <div className="desc-layout">
@@ -3517,7 +3589,7 @@ function BadgesTab({ products }) {
               <div className="pick-info">
                 <p className="pick-name">{p.name}</p>
                 <p className="pick-price">
-                  ₹{(p.price || 0).toLocaleString('en-IN')}
+                  â‚¹{(p.price || 0).toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
@@ -3541,7 +3613,7 @@ function BadgesTab({ products }) {
           <>
             <p className="desc-editor-title">{selected.name}</p>
             <p className="desc-editor-sub" style={{ marginBottom: 18 }}>
-              4 trust badge slots shown in a 2×2 grid on the product page.
+              4 trust badge slots shown in a 2Ã—2 grid on the product page.
             </p>
 
             {/* Live 2x2 preview matching client layout */}
@@ -3557,18 +3629,18 @@ function BadgesTab({ products }) {
             }}>
               {badges.map((b, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>{ICON_PREVIEW[b.iconKey] || '✦'}</span>
+                  <span style={{ fontSize: 18 }}>{ICON_PREVIEW[b.iconKey] || 'âœ¦'}</span>
                   <div>
                     <div style={{
                       fontFamily: 'Jost,sans-serif', fontSize: 13,
                       fontWeight: 600, color: '#1a1a1a',
                     }}>
-                      {b.label || '—'}
+                      {b.label || 'â€”'}
                     </div>
                     <div style={{
                       fontFamily: 'Jost,sans-serif', fontSize: 11, color: '#888',
                     }}>
-                      {b.sub || '—'}
+                      {b.sub || 'â€”'}
                     </div>
                   </div>
                 </div>
@@ -3621,7 +3693,7 @@ function BadgesTab({ products }) {
                       className="field-input"
                       value={badge.sub || ''}
                       onChange={e => updateBadge(idx, 'sub', e.target.value)}
-                      placeholder="e.g. On orders above ₹999"
+                      placeholder="e.g. On orders above â‚¹999"
                     />
                   </div>
                 </div>
@@ -3643,7 +3715,7 @@ function BadgesTab({ products }) {
   );
 }
 
-/* ────────── MAIN COMPONENT ────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MAIN COMPONENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function ContentManager() {
   const [tab, setTab] = useState('descriptions');
   const [allProds, setAllProds] = useState(allProducts);
@@ -3668,7 +3740,7 @@ export default function ContentManager() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Content</h1>
-          <p className="page-sub">Edit product descriptions and customer reviews — changes go live instantly.</p>
+          <p className="page-sub">Edit product descriptions and customer reviews â€” changes go live instantly.</p>
         </div>
       </div>
 
@@ -3691,7 +3763,6 @@ export default function ContentManager() {
     </div>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CouponManager.css =====
 
@@ -4044,7 +4115,7 @@ export default function ContentManager() {
   position: relative;
 }
 .coupon-info-list li::before {
-  content: '→';
+  content: 'â†’';
   position: absolute;
   left: 0;
   color: #aaa;
@@ -4058,7 +4129,6 @@ export default function ContentManager() {
   .coupon-card-right { width: 100%; justify-content: space-between; }
   .coupon-form-actions { flex-direction: column; }
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\CouponManager.js =====
 
@@ -4127,23 +4197,26 @@ export default function CouponManager() {
 
     setSaving(true);
     try {
+      const existingCoupon = editId ? coupons.find(c => c.id === editId) : null;
+
       const data = {
-        code: code,
+        code,
         discountPercent: Number(form.discountPercent),
         minOrder: Number(form.minOrder) || 0,
-        active: form.active,
+        active: form.active !== false,
         label: form.label.trim() || `${form.discountPercent}% off`,
         maxUses: form.maxUses ? Number(form.maxUses) : null,
+        uses: existingCoupon?.uses || 0,
         ...(form.expiresAt ? { expiresAt: new Date(form.expiresAt) } : { expiresAt: null }),
         updatedAt: serverTimestamp(),
-        ...(!editId && { createdAt: serverTimestamp() }),
+        ...(!editId ? { createdAt: serverTimestamp() } : {}),
       };
 
       // Document ID = coupon code (so client can look it up directly)
       const docId = editId || code;
       await setDoc(doc(db, 'coupons', docId), data, { merge: true });
 
-      showToast(editId ? 'Coupon updated ✓' : 'Coupon created — ready to use! 🎉');
+      showToast(editId ? 'Coupon updated âœ“' : 'Coupon created â€” ready to use! ðŸŽ‰');
       setForm(EMPTY_COUPON);
       setShowForm(false);
       setEditId(null);
@@ -4180,7 +4253,7 @@ export default function CouponManager() {
 
   const toggleActive = async (coupon) => {
     await setDoc(doc(db, 'coupons', coupon.id), { active: !coupon.active }, { merge: true });
-    showToast(coupon.active ? 'Coupon deactivated' : 'Coupon activated ✓');
+    showToast(coupon.active ? 'Coupon deactivated' : 'Coupon activated âœ“');
   };
 
   const cancelEdit = () => {
@@ -4265,7 +4338,7 @@ export default function CouponManager() {
             </div>
 
             <div className="form-field">
-              <label className="field-label">Minimum Order Amount (₹)</label>
+              <label className="field-label">Minimum Order Amount (â‚¹)</label>
               <input
                 className="field-input"
                 type="number"
@@ -4321,7 +4394,7 @@ export default function CouponManager() {
                 onChange={e => setForm({ ...form, active: e.target.checked })}
               />
               <span className="coupon-toggle-track" />
-              <span>{form.active ? 'Active — customers can use this code' : 'Inactive — code will be rejected at checkout'}</span>
+              <span>{form.active ? 'Active â€” customers can use this code' : 'Inactive â€” code will be rejected at checkout'}</span>
             </label>
           </div>
 
@@ -4383,7 +4456,7 @@ export default function CouponManager() {
                   <p className="coupon-card-desc">{coupon.label || `${coupon.discountPercent}% discount`}</p>
                   <div className="coupon-card-meta">
                     {coupon.minOrder > 0 && (
-                      <span>Min: ₹{Number(coupon.minOrder).toLocaleString('en-IN')}</span>
+                      <span>Min: â‚¹{Number(coupon.minOrder).toLocaleString('en-IN')}</span>
                     )}
                     {coupon.expiresAt && (
                       <span>
@@ -4401,7 +4474,7 @@ export default function CouponManager() {
                   </div>
                   <div className="coupon-card-actions">
                     <button className="coupon-action-btn toggle-btn" onClick={() => toggleActive(coupon)} title={coupon.active ? 'Deactivate' : 'Activate'}>
-                      {coupon.active ? '⏸' : '▶'}
+                      {coupon.active ? 'â¸' : 'â–¶'}
                     </button>
                     <button className="coupon-action-btn edit-btn" onClick={() => handleEdit(coupon)} title="Edit">
                       <Pencil size={13} />
@@ -4422,8 +4495,8 @@ export default function CouponManager() {
         <h3 style={{ fontFamily: 'Cormorant Garamond', fontSize: 18, marginBottom: 10 }}>How Coupons Work</h3>
         <ul className="coupon-info-list">
           <li>Customers enter the code at checkout in the "Promo code" field</li>
-          <li>The code is verified securely against Firebase — <strong>never exposed in client source code</strong></li>
-          <li>If the coupon is inactive, expired, or doesn't meet minimum order — it's rejected automatically</li>
+          <li>The code is verified securely against Firebase â€” <strong>never exposed in client source code</strong></li>
+          <li>If the coupon is inactive, expired, or doesn't meet minimum order â€” it's rejected automatically</li>
           <li>You can deactivate a coupon anytime without deleting it (pause/resume)</li>
           <li>The document ID in Firestore = the coupon code (case-insensitive on client side)</li>
         </ul>
@@ -4431,7 +4504,6 @@ export default function CouponManager() {
     </div>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\Dashboard.css =====
 
@@ -4521,7 +4593,6 @@ export default function CouponManager() {
   .dash-bottom { grid-template-columns: 1fr; }
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\Dashboard.js =====
 
 import React, { useEffect, useState } from 'react';
@@ -4560,14 +4631,14 @@ export default function Dashboard() {
     { label: 'Total Products', value: totalProducts,                              icon: Package,    color: '#6c63ff' },
     { label: 'Total Orders',   value: orders.length,                              icon: ShoppingBag,color: '#2d6a4f' },
     { label: 'Items Sold',     value: totalItems,                                 icon: TrendingUp, color: '#C9A84C' },
-    { label: 'Revenue',        value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: IndianRupee, color: '#1a1a1a' },
+    { label: 'Revenue',        value: `â‚¹${totalRevenue.toLocaleString('en-IN')}`, icon: IndianRupee, color: '#1a1a1a' },
   ];
 
   return (
     <div className="dashboard">
       <div className="page-header">
         <h1 className="page-title">Dashboard</h1>
-        <p className="page-sub">Welcome back — here's what's happening with Kanyamaa today.</p>
+        <p className="page-sub">Welcome back â€” here's what's happening with Kanyamaa today.</p>
       </div>
 
       <div className="stats-grid">
@@ -4598,11 +4669,11 @@ export default function Dashboard() {
                   {recentOrders.map(o => (
                     <tr key={o.id}>
                       <td className="order-id">#{o.id.slice(0,8).toUpperCase()}</td>
-                      <td>{o.customer?.firstName || '—'} {o.customer?.lastName || ''}</td>
+                      <td>{o.customer?.firstName || 'â€”'} {o.customer?.lastName || ''}</td>
                       <td>{o.items?.length || 0} item(s)</td>
-                      <td>₹{(o.total||0).toLocaleString('en-IN')}</td>
+                      <td>â‚¹{(o.total||0).toLocaleString('en-IN')}</td>
                       <td><span className={`badge badge-${o.status === 'completed' ? 'green' : o.status === 'cancelled' ? 'gray' : 'gold'}`}>{o.status || 'pending'}</span></td>
-                      <td className="order-date">{o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '—'}</td>
+                      <td className="order-date">{o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : 'â€”'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -4629,7 +4700,6 @@ export default function Dashboard() {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\FooterManager.css =====
 
 .footer-manager { max-width: 800px; }
@@ -4653,7 +4723,6 @@ export default function Dashboard() {
 .fp-link { font-family:'Jost',sans-serif; font-size:11px; font-weight:500; letter-spacing:0.1em; color:#777; }
 @media (max-width:600px) { .social-link-row { flex-wrap:wrap; } .social-remove-btn { margin-top:0; } }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\FooterManager.js =====
 
 // src/pages/FooterManager.js  (ADMIN)
@@ -4672,7 +4741,7 @@ const DEFAULT_FOOTER_DATA = {
   contactEmail:    'support@kanyamma.com',
   contactPhone:    '+91 98765 43210',
   contactAddress:  '12, Jewellers Lane, New Delhi - 110001',
-  copyrightText:   '© 2026 Kanyamma Collections. All rights reserved.',
+  copyrightText:   'Â© 2026 Kanyamma Collections. All rights reserved.',
   whatsappNumber:  '',   // leave blank to use contactPhone
   whatsappMessage: 'Hello! I have a question about Kanyamaa Collections.',
   shopLinks: [
@@ -4683,7 +4752,7 @@ const DEFAULT_FOOTER_DATA = {
   ],
 };
 
-const DEFAULT_POLICY = `Return Policy\n\nWe want you to love your kanyamma purchase. If you are not completely satisfied, we accept returns within 30 days of delivery.\n\nConditions:\n• Items must be in original, unworn condition\n• Original packaging and certificate must be included\n• Sale items and personalised pieces are non-returnable\n\nHow to Return:\nEmail us at returns@kanyamma.com with your order number and reason.\n\nReturn Address:\nKanyamma Collections\n12, Jewellers Lane, New Delhi - 110001, India\n\nRefunds are processed within 7–10 business days of receiving the returned item.\n\nFor any queries, contact: support@kanyamma.com`;
+const DEFAULT_POLICY = `Return Policy\n\nWe want you to love your kanyamma purchase. If you are not completely satisfied, we accept returns within 30 days of delivery.\n\nConditions:\nâ€¢ Items must be in original, unworn condition\nâ€¢ Original packaging and certificate must be included\nâ€¢ Sale items and personalised pieces are non-returnable\n\nHow to Return:\nEmail us at returns@kanyamma.com with your order number and reason.\n\nReturn Address:\nKanyamma Collections\n12, Jewellers Lane, New Delhi - 110001, India\n\nRefunds are processed within 7â€“10 business days of receiving the returned item.\n\nFor any queries, contact: support@kanyamma.com`;
 
 const PRESETS = [
   { label: 'INSTAGRAM' },
@@ -4704,7 +4773,7 @@ export default function FooterManager() {
   const [newUrl,     setNewUrl]     = useState('');
   const [saving,     setSaving]     = useState(false);
 
-  // ── Load from Firebase ──────────────────────────────────────────────────
+  // â”€â”€ Load from Firebase â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const u1 = onSnapshot(doc(db, 'site', 'footer_settings'), snap => {
       if (snap.exists()) {
@@ -4732,7 +4801,7 @@ export default function FooterManager() {
     return () => { u1(); u2(); };
   }, []);
 
-  // ── Save functions ──────────────────────────────────────────────────────
+  // â”€â”€ Save functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const saveFooterSettings = async (extraData = {}) => {
     setSaving(true);
     const merged = {
@@ -4750,17 +4819,17 @@ export default function FooterManager() {
     };
     await setDoc(doc(db, 'site', 'footer_settings'), merged);
     setSaving(false);
-    showToast('Saved — live on client! ✓');
+    showToast('Saved â€” live on client! âœ“');
   };
 
   const saveSocials = async (links) => {
     setSaving(true);
     await setDoc(doc(db, 'site', 'footer_socials'), { links });
     setSaving(false);
-    showToast('Social links saved ✓');
+    showToast('Social links saved âœ“');
   };
 
-  // ── Social handlers ─────────────────────────────────────────────────────
+  // â”€â”€ Social handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const addSocial = () => {
     if (!newLabel.trim() || !newUrl.trim()) { showToast('Enter both label and URL', 'error'); return; }
     const updated = [...socials, { label: newLabel.toUpperCase().trim(), url: newUrl.trim() }];
@@ -4779,7 +4848,7 @@ export default function FooterManager() {
   const removeSocial  = (idx)          => { const u = socials.filter((_, i) => i !== idx); setSocials(u); saveSocials(u); };
   const updateSocial  = (idx, f, v)    => setSocials(socials.map((s, i) => i === idx ? { ...s, [f]: v } : s));
 
-  // ── Shop links handlers ─────────────────────────────────────────────────
+  // â”€â”€ Shop links handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const addShopLink    = ()           => setFooterData(p => ({ ...p, shopLinks: [...p.shopLinks, { label: 'New Link', url: '/shop' }] }));
   const removeShopLink = (idx)        => setFooterData(p => ({ ...p, shopLinks: p.shopLinks.filter((_, i) => i !== idx) }));
   const updateShopLink = (idx, f, v)  => setFooterData(p => ({ ...p, shopLinks: p.shopLinks.map((l, i) => i === idx ? { ...l, [f]: v } : l) }));
@@ -4808,7 +4877,7 @@ export default function FooterManager() {
         ))}
       </div>
 
-      {/* ═══════════════════ BRANDING TAB ═══════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• BRANDING TAB â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {activeTab === 'branding' && (
         <div className="card">
           <h3 className="form-title">Brand &amp; Contact Information</h3>
@@ -4840,10 +4909,10 @@ export default function FooterManager() {
 
           <div className="form-field" style={{ marginBottom: 16 }}>
             <label className="field-label">Copyright Text</label>
-            <input className="field-input" value={footerData.copyrightText} onChange={e => setFooterData({ ...footerData, copyrightText: e.target.value })} placeholder="© 2026 Kanyamma Collections. All rights reserved." />
+            <input className="field-input" value={footerData.copyrightText} onChange={e => setFooterData({ ...footerData, copyrightText: e.target.value })} placeholder="Â© 2026 Kanyamma Collections. All rights reserved." />
           </div>
 
-          {/* ── WhatsApp Section ── */}
+          {/* â”€â”€ WhatsApp Section â”€â”€ */}
           <div style={{ margin: '24px 0 8px', padding: '16px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <MessageCircle size={16} color="#16a34a" />
@@ -4854,7 +4923,7 @@ export default function FooterManager() {
             </p>
 
             <div className="form-field" style={{ marginBottom: 14 }}>
-              <label className="field-label">WhatsApp Number (optional — overrides Contact Phone)</label>
+              <label className="field-label">WhatsApp Number (optional â€” overrides Contact Phone)</label>
               <input
                 className="field-input"
                 type="tel"
@@ -4884,7 +4953,7 @@ export default function FooterManager() {
         </div>
       )}
 
-      {/* ═══════════════════ SHOP LINKS TAB ═══════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SHOP LINKS TAB â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {activeTab === 'links' && (
         <div className="card">
           <h3 className="form-title">Shop Links (Footer Column)</h3>
@@ -4902,7 +4971,7 @@ export default function FooterManager() {
                 <label className="field-label">URL</label>
                 <input className="field-input" value={link.url} onChange={e => updateShopLink(idx, 'url', e.target.value)} placeholder="/shop" />
               </div>
-              <button className="btn-danger-sm" onClick={() => removeShopLink(idx)} style={{ marginBottom: 2 }}>✕</button>
+              <button className="btn-danger-sm" onClick={() => removeShopLink(idx)} style={{ marginBottom: 2 }}>âœ•</button>
             </div>
           ))}
 
@@ -4915,7 +4984,7 @@ export default function FooterManager() {
         </div>
       )}
 
-      {/* ═══════════════════ SOCIALS TAB ═══════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SOCIALS TAB â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {activeTab === 'socials' && (
         <div className="card">
           <h3 className="form-title">Social Media Links</h3>
@@ -4938,7 +5007,7 @@ export default function FooterManager() {
                 <label className="field-label">URL</label>
                 <input className="field-input" value={s.url} onChange={e => updateSocial(idx, 'url', e.target.value)} placeholder="https://instagram.com/yourpage" />
               </div>
-              <button className="btn-danger-sm" onClick={() => removeSocial(idx)} style={{ marginBottom: 2 }}>✕</button>
+              <button className="btn-danger-sm" onClick={() => removeSocial(idx)} style={{ marginBottom: 2 }}>âœ•</button>
             </div>
           ))}
 
@@ -4954,7 +5023,7 @@ export default function FooterManager() {
         </div>
       )}
 
-      {/* ═══════════════════ POLICY TAB ═══════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• POLICY TAB â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {activeTab === 'policy' && (
         <div className="card">
           <h3 className="form-title">Return Policy</h3>
@@ -4974,7 +5043,6 @@ export default function FooterManager() {
     </div>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\HeroManager.css =====
 
@@ -5136,7 +5204,6 @@ export default function FooterManager() {
   .hero-images-grid { grid-template-columns: 1fr 1fr; }
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\HeroManager.js =====
 
 import React, { useState, useEffect, useContext } from 'react';
@@ -5161,7 +5228,7 @@ const DEFAULT_HERO = {
   subtext: 'Handcrafted for the moments that take your breath away. Ethically sourced, masterfully designed, forever yours.',
   btnPrimaryText: 'SHOP COLLECTION',
   btnGhostText: 'THE GIFT GUIDE',
-  sideLabel: 'KANYAMAA COLLECTIONS FINE JEWELLERY — EST. 1994',
+  sideLabel: 'KANYAMAA COLLECTIONS FINE JEWELLERY â€” EST. 1994',
   stats: [
     { value: '30+', label: 'Years of Craft' },
     { value: '14k', label: 'Happy Clients' },
@@ -5188,7 +5255,7 @@ export default function HeroManager() {
     setSaving(true);
     try {
       await setDoc(doc(db, 'site', 'hero_section'), hero);
-      showToast('Hero section updated — live on client! ✓');
+      showToast('Hero section updated â€” live on client! âœ“');
     } catch (err) {
       showToast('Error saving hero section', 'error');
     }
@@ -5240,7 +5307,7 @@ export default function HeroManager() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Hero Section</h1>
-          <p className="page-sub">Edit the homepage hero banner — images, text, buttons, and stats. Changes are live instantly.</p>
+          <p className="page-sub">Edit the homepage hero banner â€” images, text, buttons, and stats. Changes are live instantly.</p>
         </div>
         <button className="btn-secondary" onClick={() => setShowPreview(p => !p)}>
           <Eye size={14} /> {showPreview ? 'Hide' : 'Show'} Preview
@@ -5426,7 +5493,6 @@ export default function HeroManager() {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\ImageDropzone.js =====
 
 import React, { useRef, useState, useContext } from 'react';
@@ -5436,7 +5502,7 @@ import ImageCropper from './ImageCropper';
 import './ImageDropzone.css';
 
 /**
- * ImageDropzone — supports multi-image upload
+ * ImageDropzone â€” supports multi-image upload
  *
  * Props:
  *   value      string | string[]   current image URL or array of URLs
@@ -5491,12 +5557,12 @@ export default function ImageDropzone({
       Promise.allSettled(readers).then(results => {
         const srcs = results.filter(r => r.status === 'fulfilled').map(r => r.value);
         if (!srcs.length) return;
-        // Start cropping queue — first item opens immediately, rest queue
+        // Start cropping queue â€” first item opens immediately, rest queue
         setCurrentCropSrc(srcs[0]);
         setCropQueue(srcs.slice(1));
       });
     } else {
-      // Single mode — just process first file
+      // Single mode â€” just process first file
       const file = valid[0];
       if (file.size > 15 * 1024 * 1024) { showToast('File too large (max 15MB)', 'error'); return; }
       const reader = new FileReader();
@@ -5547,7 +5613,7 @@ export default function ImageDropzone({
     if (multi) {
       // Add to images array
       onChange([...(images || []), croppedUrl]);
-      showToast('Image added ✓');
+      showToast('Image added âœ“');
       // Process next in queue if any
       if (cropQueue.length > 0) {
         const [next, ...rest] = cropQueue;
@@ -5559,7 +5625,7 @@ export default function ImageDropzone({
     } else {
       onChange(croppedUrl);
       setCurrentCropSrc(null);
-      showToast('Image cropped & ready ✓');
+      showToast('Image cropped & ready âœ“');
     }
   };
 
@@ -5580,7 +5646,7 @@ export default function ImageDropzone({
     onChange(images.filter((_, i) => i !== idx));
   };
 
-  // ── MULTI mode render ──
+  // â”€â”€ MULTI mode render â”€â”€
   if (multi) {
     return (
       <>
@@ -5602,7 +5668,7 @@ export default function ImageDropzone({
             </div>
           )}
 
-          {/* Add more — only show if under limit */}
+          {/* Add more â€” only show if under limit */}
           {images.length < maxFiles && (
             <div
               className={`dropzone ${dragOver ? 'drag-over' : ''}`}
@@ -5615,7 +5681,7 @@ export default function ImageDropzone({
               <div className="dropzone-content">
                 <Plus size={22} className="dropzone-icon" />
                 <p className="dropzone-label">Add images ({images.length}/{maxFiles})</p>
-                <p className="dropzone-sub">Select multiple at once · PNG, JPG · Max 15MB each</p>
+                <p className="dropzone-sub">Select multiple at once Â· PNG, JPG Â· Max 15MB each</p>
               </div>
             </div>
           )}
@@ -5646,7 +5712,7 @@ export default function ImageDropzone({
     );
   }
 
-  // ── SINGLE mode render (original behaviour) ──
+  // â”€â”€ SINGLE mode render (original behaviour) â”€â”€
   return (
     <>
       <div className="dropzone-wrapper">
@@ -5677,7 +5743,7 @@ export default function ImageDropzone({
             <div className="dropzone-content">
               <Upload size={30} className="dropzone-icon" />
               <p className="dropzone-label">Drop image here or click to browse</p>
-              <p className="dropzone-sub">Crop or use original · PNG, JPG · Max 15MB</p>
+              <p className="dropzone-sub">Crop or use original Â· PNG, JPG Â· Max 15MB</p>
             </div>
           )}
         </div>
@@ -5700,14 +5766,13 @@ export default function ImageDropzone({
         <ImageCropper
           src={currentCropSrc}
           aspect={aspect}
-          onConfirm={(croppedUrl) => { onChange(croppedUrl); setCurrentCropSrc(null); showToast('Image ready ✓'); }}
+          onConfirm={(croppedUrl) => { onChange(croppedUrl); setCurrentCropSrc(null); showToast('Image ready âœ“'); }}
           onCancel={() => setCurrentCropSrc(null)}
         />
       )}
     </>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\LoginPage.css =====
 
@@ -5785,7 +5850,6 @@ export default function ImageDropzone({
   font-family: 'Jost', sans-serif;
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\LoginPage.js =====
 
 import React, { useState } from 'react';
@@ -5809,7 +5873,7 @@ export default function LoginPage({ onLogin }) {
 
     try {
       await signInWithEmailAndPassword(auth, user, pass);
-      onLogin(); // ✅ success
+      onLogin(); // âœ… success
     } catch (error) {
       setErr('Invalid email or password');
     }
@@ -5843,7 +5907,7 @@ export default function LoginPage({ onLogin }) {
               type="password"
               value={pass}
               onChange={e => { setPass(e.target.value); setErr(''); }}
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
             />
           </div>
 
@@ -5857,7 +5921,6 @@ export default function LoginPage({ onLogin }) {
     </div>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\OrdersPage.css =====
 
@@ -6027,7 +6090,6 @@ export default function LoginPage({ onLogin }) {
   .order-details-grid { grid-template-columns: 1fr; }
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\OrdersPage.js =====
 
 import React, { useState, useEffect, useContext } from 'react';
@@ -6105,7 +6167,7 @@ export default function OrdersPage() {
 
   const updateStatus = async (id, status) => {
     await updateDoc(doc(db,'orders',id), { status });
-    showToast(`Order status → ${status} ✓`);
+    showToast(`Order status â†’ ${status} âœ“`);
   };
 
   // Seed demo orders
@@ -6119,7 +6181,7 @@ export default function OrdersPage() {
           createdAt: serverTimestamp(),
         });
       }
-      showToast('5 demo orders created! 🎉');
+      showToast('5 demo orders created! ðŸŽ‰');
     } catch (err) {
       console.error(err);
       showToast('Error creating demo orders', 'error');
@@ -6179,7 +6241,7 @@ export default function OrdersPage() {
           <p className="sum-label">Items Sold</p>
         </div>
         <div className="card summary-box">
-          <p className="sum-val">₹{totalRevenue.toLocaleString('en-IN')}</p>
+          <p className="sum-val">â‚¹{totalRevenue.toLocaleString('en-IN')}</p>
           <p className="sum-label">Total Revenue</p>
         </div>
         <div className="card summary-box">
@@ -6229,11 +6291,11 @@ export default function OrdersPage() {
                         </span>
                         <span>{order.items?.length || 0} item(s)</span>
                         <span className="order-date-text">
-                          {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'}
+                          {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : 'â€”'}
                         </span>
                       </div>
                       <div className="order-row-right">
-                        <span className="order-total">₹{(order.total||0).toLocaleString('en-IN')}</span>
+                        <span className="order-total">â‚¹{(order.total||0).toLocaleString('en-IN')}</span>
                         <select
                           className="status-select"
                           value={order.status || 'pending'}
@@ -6279,24 +6341,24 @@ export default function OrdersPage() {
                               <p className="order-item-name">{item.name}</p>
                               <p className="order-item-cat">
                                 {item.category}
-                                {item.size && ` · Size: ${item.size}`}
-                                {item.material && ` · ${item.material}`}
+                                {item.size && ` Â· Size: ${item.size}`}
+                                {item.material && ` Â· ${item.material}`}
                               </p>
                             </div>
                             <div className="order-item-right">
-                              <span className="order-item-qty">×{item.qty}</span>
-                              <span className="order-item-price">₹{(item.price||0).toLocaleString('en-IN')}</span>
+                              <span className="order-item-qty">Ã—{item.qty}</span>
+                              <span className="order-item-price">â‚¹{(item.price||0).toLocaleString('en-IN')}</span>
                             </div>
                           </div>
                         ))}
 
                         {/* Order totals */}
                         <div className="order-totals">
-                          <div className="order-total-row"><span>Subtotal</span><span>₹{(order.subtotal||0).toLocaleString('en-IN')}</span></div>
-                          {order.discount > 0 && <div className="order-total-row discount"><span>Discount</span><span>−₹{order.discount.toLocaleString('en-IN')}</span></div>}
-                          <div className="order-total-row"><span>Shipping</span><span>{order.shipping === 0 ? 'FREE' : `₹${order.shipping}`}</span></div>
-                          <div className="order-total-row"><span>Tax</span><span>₹{(order.tax||0).toLocaleString('en-IN')}</span></div>
-                          <div className="order-total-row grand-total"><span>Total</span><span>₹{(order.total||0).toLocaleString('en-IN')}</span></div>
+                          <div className="order-total-row"><span>Subtotal</span><span>â‚¹{(order.subtotal||0).toLocaleString('en-IN')}</span></div>
+                          {order.discount > 0 && <div className="order-total-row discount"><span>Discount</span><span>âˆ’â‚¹{order.discount.toLocaleString('en-IN')}</span></div>}
+                          <div className="order-total-row"><span>Shipping</span><span>{order.shipping === 0 ? 'FREE' : `â‚¹${order.shipping}`}</span></div>
+                          <div className="order-total-row"><span>Tax</span><span>â‚¹{(order.tax||0).toLocaleString('en-IN')}</span></div>
+                          <div className="order-total-row grand-total"><span>Total</span><span>â‚¹{(order.total||0).toLocaleString('en-IN')}</span></div>
                         </div>
                       </div>
                     )}
@@ -6319,7 +6381,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="breakdown-info">
                   <p className="breakdown-name">{name}</p>
-                  <p className="breakdown-rev">₹{data.revenue.toLocaleString('en-IN')}</p>
+                  <p className="breakdown-rev">â‚¹{data.revenue.toLocaleString('en-IN')}</p>
                 </div>
                 <span className="breakdown-qty">{data.qty} sold</span>
               </div>
@@ -6330,7 +6392,6 @@ export default function OrdersPage() {
     </div>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\ProductManager.css =====
 
@@ -6350,12 +6411,12 @@ export default function OrdersPage() {
 .form-field { display:flex; flex-direction:column; gap:7px; }
 .form-hint { font-family:'Jost',sans-serif; font-size:11px; color:#aaa; font-style:italic; }
 
-/* Section checkboxes — feature 7 */
+/* Section checkboxes â€” feature 7 */
 .section-checkboxes { display:flex; flex-direction:column; gap:10px; }
 .section-check { display:flex; align-items:center; gap:10px; cursor:pointer; font-family:'Jost',sans-serif; font-size:13px; color:#444; }
 .section-check input[type=radio] { accent-color:#1a1a1a; width:16px; height:16px; }
 
-/* Media grid — feature 1 */
+/* Media grid â€” feature 1 */
 .media-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:16px; }
 .media-slot { display:flex; flex-direction:column; gap:8px; }
 .media-slot-header { display:flex; align-items:center; justify-content:space-between; }
@@ -6366,7 +6427,7 @@ export default function OrdersPage() {
 .media-add-slot span { font-family:'Jost',sans-serif; font-size:12px; color:#bbb; }
 .media-add-slot:hover { border-color:#1a1a1a; background:#fafafa; }
 
-/* Sale section — feature 2 */
+/* Sale section â€” feature 2 */
 .sale-section { display:flex; flex-direction:column; gap:16px; }
 .sale-preview-box { background:#fff8f8; border:1px solid #fcd4cf; border-radius:10px; padding:16px 20px; }
 .sale-preview-label { font-size:11px; color:#888; margin-bottom:10px; font-family:'Jost',sans-serif; text-transform:uppercase; letter-spacing:0.08em; }
@@ -6486,7 +6547,6 @@ export default function OrdersPage() {
   .variant-form-row { flex-direction: column; }
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\ProductManager.js =====
 
 import React, { useState, useEffect, useContext } from 'react';
@@ -6521,14 +6581,14 @@ const FALLBACK_SUBCATS = {
 };
 
 const CATEGORY_DEFAULTS = {
-  watches:   { details:'This timepiece is a masterpiece of horological artistry.', care:'Wind the crown gently every 40 hours if not worn.', shipping:'Fully insured express shipping within 1–2 business days.' },
+  watches:   { details:'This timepiece is a masterpiece of horological artistry.', care:'Wind the crown gently every 40 hours if not worn.', shipping:'Fully insured express shipping within 1â€“2 business days.' },
   rings:     { details:'Crafted from premium materials and finished by hand.', care:'Remove before swimming or using harsh chemicals.', shipping:'Complimentary express shipping on all orders.' },
-  necklaces: { details:'A beautifully crafted necklace featuring superior materials.', care:'Store flat or hung to prevent tangling.', shipping:'Express shipping, 1–2 business days.' },
+  necklaces: { details:'A beautifully crafted necklace featuring superior materials.', care:'Store flat or hung to prevent tangling.', shipping:'Express shipping, 1â€“2 business days.' },
   bracelets: { details:'A meticulously crafted bracelet combining comfort with elegance.', care:'Store flat in the provided box.', shipping:'Fully insured shipping with tracking.' },
-  earrings:  { details:'Stunning earrings crafted with attention to detail.', care:'Wipe gently after each wear.', shipping:'Express shipping, 1–2 business days.' },
-  pendants:  { details:'An elegant pendant featuring superior craftsmanship.', care:'Polish with a soft cloth.', shipping:'Express shipping, 1–2 business days.' },
-  anklets:   { details:'A delicate anklet that adds elegance to every step.', care:'Remove before swimming.', shipping:'Express shipping, 1–2 business days.' },
-  charms:    { details:'A meaningful charm crafted with care.', care:'Wipe with a soft cloth after wearing.', shipping:'Express shipping, 1–2 business days.' },
+  earrings:  { details:'Stunning earrings crafted with attention to detail.', care:'Wipe gently after each wear.', shipping:'Express shipping, 1â€“2 business days.' },
+  pendants:  { details:'An elegant pendant featuring superior craftsmanship.', care:'Polish with a soft cloth.', shipping:'Express shipping, 1â€“2 business days.' },
+  anklets:   { details:'A delicate anklet that adds elegance to every step.', care:'Remove before swimming.', shipping:'Express shipping, 1â€“2 business days.' },
+  charms:    { details:'A meaningful charm crafted with care.', care:'Wipe with a soft cloth after wearing.', shipping:'Express shipping, 1â€“2 business days.' },
 };
 
 const EMPTY = {
@@ -6558,7 +6618,7 @@ export default function ProductManager() {
   const [newCustomSize, setNewCustomSize] = useState('');
   const [nextProductNum, setNextProductNum] = useState(1);
 
-  // Load only Firebase products — no fallback seed data
+  // Load only Firebase products â€” no fallback seed data
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'products'), snap => {
       const fbProds = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -6630,23 +6690,67 @@ export default function ProductManager() {
     });
   };
 
-  const toggleSizeStock = (size) => {
+  // â”€â”€ Numeric per-size stock helpers â”€â”€
+  const getStockValue = (value) => {
+    if (value === false) return 0;
+    if (value === true || value === undefined || value === null || value === '') return '';
+    return Number(value) || 0;
+  };
+
+  const updateSizeStock = (size, value) => {
+    const stock = Math.max(0, Number(value) || 0);
+
     setForm(f => ({
       ...f,
-      sizeStock: { ...f.sizeStock, [size]: f.sizeStock[size] === false ? true : false },
+      sizeStock: {
+        ...f.sizeStock,
+        [size]: stock,
+      },
     }));
+  };
+
+  const markSizeOutOfStock = (size) => {
+    setForm(f => ({
+      ...f,
+      sizeStock: {
+        ...f.sizeStock,
+        [size]: 0,
+      },
+    }));
+  };
+
+  // Compatibility toggle (still used for quick toggling) â€” now sets a numeric quantity
+  const toggleSizeStock = (size) => {
+    setForm(f => {
+      const current = getStockValue(f.sizeStock?.[size]);
+      const fallbackQty = Number(f.quantity) || 1;
+
+      return {
+        ...f,
+        sizeStock: {
+          ...f.sizeStock,
+          [size]: current > 0 ? 0 : fallbackQty,
+        },
+      };
+    });
   };
 
   const addCustomSize = () => {
     if (!newCustomSize.trim()) return;
     if ((form.customSizes || []).includes(newCustomSize.trim())) {
-      showToast('Size already exists', 'error'); return;
+      showToast('Size already exists', 'error');
+      return;
     }
+
     setForm(f => ({
       ...f,
       customSizes: [...(f.customSizes || []), newCustomSize.trim()],
-      sizeStock: { ...f.sizeStock, [newCustomSize.trim()]: true },
+      sizeStock: {
+        ...f.sizeStock,
+        [newCustomSize.trim()]: Number(f.quantity) || 1,
+      },
     }));
+
     setNewCustomSize('');
   };
 
@@ -6666,7 +6770,7 @@ export default function ProductManager() {
     if (!product) return;
     const newStock = { ...(product.sizeStock || {}), [size]: !currentStatus };
     await updateDoc(doc(db, 'products', String(productId)), { sizeStock: newStock });
-    showToast(`Size ${size} ${!currentStatus ? 'in stock' : 'out of stock'} ✓`);
+    showToast(`Size ${size} ${!currentStatus ? 'in stock' : 'out of stock'} âœ“`);
   };
 
   const handleSubmit = async (e) => {
@@ -6675,7 +6779,7 @@ export default function ProductManager() {
 
     const hasBase64 = validImages.some(i => i.startsWith('data:'));
     if (hasBase64) {
-      showToast('Image not uploaded yet — please wait for upload to complete or use a URL', 'error');
+      showToast('Image not uploaded yet â€” please wait for upload to complete or use a URL', 'error');
       return;
     }
 
@@ -6692,6 +6796,19 @@ export default function ProductManager() {
         : nextProductNum;
       const resolvedSKU = `SKU-${String(resolvedProductNum).padStart(3, '0')}`;
 
+      const normalisedSizeStock = Object.fromEntries(
+        Object.entries(form.sizeStock || {}).map(([size, value]) => {
+          if (value === false) return [size, 0];
+          if (value === true) return [size, Number(form.quantity) || 0];
+          return [size, Math.max(0, Number(value) || 0)];
+        })
+      );
+
+      const totalSizeStock = Object.values(normalisedSizeStock).reduce(
+        (sum, value) => sum + (Number(value) || 0),
+        0
+      );
+
       const productData = {
         name: form.name,
         price: Number(form.price),
@@ -6702,9 +6819,9 @@ export default function ProductManager() {
         images: validImages,
         image: validImages[0],
         video: form.video || '',
-        sizeStock: form.sizeStock || {},
+        sizeStock: normalisedSizeStock,
         customSizes: form.customSizes || [],
-        quantity: Number(form.quantity) || 0,
+        quantity: form.hasSize !== false ? totalSizeStock : Number(form.quantity) || 0,
         hasSize: form.hasSize !== false,
         sizeNote: form.sizeNote || '',
         variants: (form.variants || []).filter(v => v.name || (v.images || []).length > 0),
@@ -6723,17 +6840,17 @@ export default function ProductManager() {
             ...productData, createdAt: serverTimestamp(),
           });
           savedId = ref.id;
-          showToast('Product saved to Firebase ✓');
+          showToast('Product saved to Firebase âœ“');
         } else {
           await updateDoc(doc(db, 'products', editId), productData);
-          showToast('Product updated ✓');
+          showToast('Product updated âœ“');
         }
       } else {
         const ref = await addDoc(collection(db, 'products'), {
           ...productData, createdAt: serverTimestamp(),
         });
         savedId = ref.id;
-        showToast('Product added — live on client! 🚀');
+        showToast('Product added â€” live on client! ðŸš€');
       }
 
       if (savedId && typeof savedId === 'string') {
@@ -6757,7 +6874,7 @@ export default function ProductManager() {
       setEditId(null); setForm(EMPTY); setDesc(EMPTY_DESC); setActiveFormTab('basic');
     } catch (err) {
       console.error(err);
-      showToast('Error saving product — ' + err.message, 'error');
+      showToast('Error saving product â€” ' + err.message, 'error');
     }
     setLoading(false);
   };
@@ -6857,7 +6974,7 @@ export default function ProductManager() {
 
         <form onSubmit={handleSubmit}>
 
-          {/* ── BASIC INFO ── */}
+          {/* â”€â”€ BASIC INFO â”€â”€ */}
           {activeFormTab === 'basic' && (
             <div className="form-section">
               <div className="form-grid">
@@ -6867,7 +6984,7 @@ export default function ProductManager() {
                     value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                 </div>
                 <div className="form-field">
-                  <label className="field-label">Price (₹) *</label>
+                  <label className="field-label">Price (â‚¹) *</label>
                   <input className="field-input" type="number" placeholder="e.g. 1299"
                     value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
                 </div>
@@ -6880,7 +6997,7 @@ export default function ProductManager() {
                   <label className="field-label">Category *</label>
                   <select className="field-input" value={form.category}
                     onChange={e => handleCategoryChange(e.target.value)}>
-                    <option value="">— Select category —</option>
+                    <option value="">â€” Select category â€”</option>
                     {catOptions.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
                 </div>
@@ -6897,19 +7014,19 @@ export default function ProductManager() {
                       <input type="radio" name="section" value="bestSellers"
                         checked={form.section === 'bestSellers'}
                         onChange={() => setForm({ ...form, section: 'bestSellers' })} />
-                      <span>⭐ Best Sellers</span>
+                      <span>â­ Best Sellers</span>
                     </label>
                     <label className="section-check">
                       <input type="radio" name="section" value="newArrivals"
                         checked={form.section === 'newArrivals'}
                         onChange={() => setForm({ ...form, section: 'newArrivals' })} />
-                      <span>✨ New Arrivals</span>
+                      <span>âœ¨ New Arrivals</span>
                     </label>
                     <label className="section-check">
                       <input type="radio" name="section" value="combo"
                         checked={form.section === 'combo'}
                         onChange={() => setForm({ ...form, section: 'combo' })} />
-                      <span>🎁 Combo</span>
+                      <span>ðŸŽ Combo</span>
                     </label>
                   </div>
                 </div>
@@ -6917,7 +7034,7 @@ export default function ProductManager() {
             </div>
           )}
 
-          {/* ── SUB-CATEGORIES (multi-select) ── */}
+          {/* â”€â”€ SUB-CATEGORIES (multi-select) â”€â”€ */}
           {activeFormTab === 'subcats' && (
             <div className="form-section">
               {!form.category
@@ -6929,7 +7046,7 @@ export default function ProductManager() {
                       borderRadius: 10, padding: '10px 14px', marginBottom: 18,
                       fontFamily: 'Jost, sans-serif', fontSize: 12, color: '#2d6a4f',
                     }}>
-                      ✓ You can select <strong>multiple sub-categories</strong> for one product.
+                      âœ“ You can select <strong>multiple sub-categories</strong> for one product.
                       {(form.subCategories || []).length > 0 && (
                         <span> Selected: <strong>{form.subCategories.join(', ')}</strong></span>
                       )}
@@ -7040,7 +7157,7 @@ export default function ProductManager() {
             </div>
           )}
 
-          {/* ── SIZES & STOCK ── */}
+          {/* â”€â”€ SIZES & STOCK â”€â”€ */}
           {activeFormTab === 'sizes' && (
             <div className="form-section">
               <div style={{
@@ -7066,27 +7183,67 @@ export default function ProductManager() {
                   ) : (
                     <>
                       <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>
-                        Standard Sizes — Click to Toggle In/Out of Stock
+                        Standard Sizes - Enter Available Stock
                       </label>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
                         {sizeConfig.sizes.map(size => {
-                          const isOut = form.sizeStock[size] === false;
+                          const stock = getStockValue(form.sizeStock?.[size]);
+                          const isOut = Number(stock) <= 0;
+
                           return (
-                            <button key={size} type="button" onClick={() => toggleSizeStock(size)} style={{
-                              padding: '10px 18px',
+                            <div key={size} style={{
                               border: isOut ? '1.5px solid #e74c3c' : '1.5px solid #2d6a4f',
                               background: isOut ? '#fff5f5' : '#f0fdf4',
-                              color: isOut ? '#e74c3c' : '#2d6a4f',
-                              borderRadius: 100, fontFamily: 'Jost,sans-serif', fontSize: 13,
-                              fontWeight: 500, cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', gap: 6,
-                              textDecoration: isOut ? 'line-through' : 'none',
+                              borderRadius: 12,
+                              padding: 12,
                             }}>
-                              {isOut ? '✕' : <Check size={13} />} {size}
-                            </button>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <strong style={{
+                                  fontFamily: 'Jost,sans-serif',
+                                  fontSize: 13,
+                                  color: isOut ? '#e74c3c' : '#2d6a4f',
+                                }}>
+                                  {size}
+                                </strong>
+
+                                <button
+                                  type="button"
+                                  onClick={() => markSizeOutOfStock(size)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: '#e74c3c',
+                                    fontSize: 11,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  OOS
+                                </button>
+                              </div>
+
+                              <input
+                                className="field-input"
+                                type="number"
+                                min="0"
+                                placeholder="Stock"
+                                value={stock}
+                                onChange={e => updateSizeStock(size, e.target.value)}
+                              />
+
+                              <p style={{
+                                marginTop: 6,
+                                fontSize: 11,
+                                color: isOut ? '#e74c3c' : '#2d6a4f',
+                                fontFamily: 'Jost,sans-serif',
+                              }}>
+                                {isOut ? 'Out of stock' : `${stock} available`}
+                              </p>
+                            </div>
                           );
                         })}
                       </div>
+
                       <label className="field-label" style={{ marginBottom: 12, display: 'block' }}>Add Custom Sizes</label>
                       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                         <input className="field-input" placeholder='e.g. 13, XXL'
@@ -7098,20 +7255,36 @@ export default function ProductManager() {
                         </button>
                       </div>
                       {(form.customSizes || []).length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                          {form.customSizes.map(size => (
-                            <div key={size} style={{
-                              display: 'flex', alignItems: 'center', gap: 6,
-                              padding: '8px 14px', border: '1.5px solid #2d6a4f',
-                              background: '#f0fdf4', borderRadius: 100,
-                            }}>
-                              <span style={{ fontSize: 13, color: '#2d6a4f' }}>{size}</span>
-                              <button type="button" onClick={() => removeCustomSize(size)}
-                                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', padding: 0 }}>
-                                <X size={13} />
-                              </button>
-                            </div>
-                          ))}
+                        <div>
+                          {(form.customSizes || []).map(size => {
+                            const stock = getStockValue(form.sizeStock?.[size]);
+
+                            return (
+                              <div key={size} style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 100px auto',
+                                gap: 8,
+                                alignItems: 'center',
+                                marginBottom: 8,
+                              }}>
+                                <span style={{ fontFamily: 'Jost,sans-serif', fontSize: 13 }}>
+                                  {size}
+                                </span>
+
+                                <input
+                                  className="field-input"
+                                  type="number"
+                                  min="0"
+                                  value={stock}
+                                  onChange={e => updateSizeStock(size, e.target.value)}
+                                />
+
+                                <button type="button" className="btn-secondary" onClick={() => removeCustomSize(size)}>
+                                  Remove
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </>
@@ -7134,7 +7307,7 @@ export default function ProductManager() {
             </div>
           )}
 
-          {/* ── VARIANTS ── */}
+          {/* â”€â”€ VARIANTS â”€â”€ */}
           {activeFormTab === 'variants' && (
             <div className="form-section">
               <div style={{
@@ -7142,7 +7315,7 @@ export default function ProductManager() {
                 padding: '12px 16px', marginBottom: 18, fontSize: 12, color: '#2d6a4f',
                 fontFamily: 'Jost, sans-serif',
               }}>
-                ✓ Variants are different colors/styles of the same product. Each variant can have its own images.
+                âœ“ Variants are different colors/styles of the same product. Each variant can have its own images.
               </div>
 
               {(form.variants || []).map((variant, idx) => (
@@ -7219,7 +7392,7 @@ export default function ProductManager() {
             </div>
           )}
 
-          {/* ── MEDIA ── */}
+          {/* â”€â”€ MEDIA â”€â”€ */}
           {activeFormTab === 'media' && (
             <div className="form-section">
               <div style={{
@@ -7227,7 +7400,7 @@ export default function ProductManager() {
                 marginBottom: 14, fontSize: 12, color: '#856404',
                 fontFamily: 'Jost, sans-serif',
               }}>
-                ⚠️ Images are uploaded to Cloudinary. Do <strong>not</strong> save until the upload spinner finishes.
+                âš ï¸ Images are uploaded to Cloudinary. Do <strong>not</strong> save until the upload spinner finishes.
                 Storing raw file data will exceed Firestore limits.
               </div>
               <ImageDropzone
@@ -7247,11 +7420,11 @@ export default function ProductManager() {
             </div>
           )}
 
-          {/* ── SALE PRICING ── */}
+          {/* â”€â”€ SALE PRICING â”€â”€ */}
           {activeFormTab === 'sale' && (
             <div className="form-section">
               <div style={{ background: '#fff8f0', padding: '12px 16px', borderRadius: 10, marginBottom: 16, fontSize: 12, color: '#856404' }}>
-                💡 For category-wide sales use the <strong>Sale Banner</strong> page.
+                ðŸ’¡ For category-wide sales use the <strong>Sale Banner</strong> page.
               </div>
               <label className="section-check" style={{ marginBottom: 20 }}>
                 <input type="checkbox" checked={form.saleEnabled}
@@ -7262,11 +7435,11 @@ export default function ProductManager() {
                 <div className="form-grid">
                   <div className="form-field">
                     <label className="field-label">Original Price</label>
-                    <input className="field-input" value={`₹${form.price || 0}`} readOnly
+                    <input className="field-input" value={`â‚¹${form.price || 0}`} readOnly
                       style={{ background: '#f8f8f8', color: '#aaa' }} />
                   </div>
                   <div className="form-field">
-                    <label className="field-label">Sale Price (₹) *</label>
+                    <label className="field-label">Sale Price (â‚¹) *</label>
                     <input className="field-input" type="number" value={form.salePrice}
                       onChange={e => setForm({ ...form, salePrice: e.target.value })} />
                   </div>
@@ -7274,15 +7447,15 @@ export default function ProductManager() {
               )}
               {salePercent > 0 && (
                 <div style={{ background: '#fff0ee', border: '1px solid #fcd4cf', borderRadius: 10, padding: '16px 20px', marginTop: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontFamily: 'Cormorant Garamond,serif', fontSize: 28, fontStyle: 'italic', color: '#e74c3c' }}>₹{Number(form.salePrice).toLocaleString('en-IN')}</span>
-                  <span style={{ fontFamily: 'Cormorant Garamond,serif', fontSize: 18, color: '#bbb', textDecoration: 'line-through' }}>₹{Number(form.price).toLocaleString('en-IN')}</span>
+                  <span style={{ fontFamily: 'Cormorant Garamond,serif', fontSize: 28, fontStyle: 'italic', color: '#e74c3c' }}>â‚¹{Number(form.salePrice).toLocaleString('en-IN')}</span>
+                  <span style={{ fontFamily: 'Cormorant Garamond,serif', fontSize: 18, color: '#bbb', textDecoration: 'line-through' }}>â‚¹{Number(form.price).toLocaleString('en-IN')}</span>
                   <span style={{ background: '#e74c3c', color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100 }}>-{salePercent}% OFF</span>
                 </div>
               )}
             </div>
           )}
 
-          {/* ── CONTENT ── */}
+          {/* â”€â”€ CONTENT â”€â”€ */}
           {activeFormTab === 'content' && (
             <div className="form-section">
               <div className="form-field" style={{ marginBottom: 16 }}>
@@ -7324,7 +7497,7 @@ export default function ProductManager() {
         </form>
       </div>
 
-      {/* ── PRODUCT LIST ── */}
+      {/* â”€â”€ PRODUCT LIST â”€â”€ */}
       <div className="products-list-section">
         <div className="list-header">
           <h3 className="section-heading">All Products</h3>
@@ -7355,7 +7528,10 @@ export default function ProductManager() {
               const pct = hasDiscount ? Math.round((1 - p.salePrice / p.price) * 100) : 0;
               const sc = getSizeConfig(p.category);
               const allProductSizes = [...sc.sizes, ...(p.customSizes || [])];
-              const outOfStockCount = allProductSizes.filter(s => p.sizeStock?.[s] === false).length;
+              const outOfStockCount = allProductSizes.filter(s => Number(p.sizeStock?.[s] || 0) <= 0).length;
+              const totalStock = p.hasSize !== false
+                ? allProductSizes.reduce((sum, s) => sum + (Number(p.sizeStock?.[s]) || 0), 0)
+                : Number(p.quantity) || 0;
 
               return (
                 <div
@@ -7386,7 +7562,7 @@ export default function ProductManager() {
                         )}
                       </div>
                       <div className="pq-meta">
-                        <span className="pq-category">{p.category || '—'}</span>
+                        <span className="pq-category">{p.category || 'â€”'}</span>
                         {(p.subCategories?.length > 0
                           ? p.subCategories
                           : p.subCategory ? [p.subCategory] : []
@@ -7397,24 +7573,33 @@ export default function ProductManager() {
                         {p.section === 'bestSellers' && <span className="pq-section bestSellers">Best Seller</span>}
                         {p.section === 'newArrivals' && <span className="pq-section newArrivals">New Arrival</span>}
                         {p.section === 'combo' && (
-                          <span className="pq-section" style={{ background: '#fff3e0', color: '#e65100' }}>🎁 Combo</span>
+                          <span className="pq-section" style={{ background: '#fff3e0', color: '#e65100' }}>ðŸŽ Combo</span>
                         )}
                         {outOfStockCount > 0 && (
                           <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 100, background: '#fff0ee', color: '#e74c3c' }}>
                             {outOfStockCount} OOS
                           </span>
                         )}
+                        <span style={{
+                          fontSize: 11,
+                          padding: '2px 10px',
+                          borderRadius: 100,
+                          background: totalStock > 0 ? '#f0fdf4' : '#fff0ee',
+                          color: totalStock > 0 ? '#2d6a4f' : '#e74c3c',
+                        }}>
+                          Stock: {totalStock}
+                        </span>
                       </div>
                     </div>
                     <div className="pq-price-col">
                       {hasDiscount ? (
                         <>
-                          <p className="pq-price sale-price">₹{(p.salePrice || 0).toLocaleString('en-IN')}</p>
-                          <p className="pq-orig">₹{(p.price || 0).toLocaleString('en-IN')}</p>
+                          <p className="pq-price sale-price">â‚¹{(p.salePrice || 0).toLocaleString('en-IN')}</p>
+                          <p className="pq-orig">â‚¹{(p.price || 0).toLocaleString('en-IN')}</p>
                           <span className="pq-discount-badge">-{pct}%</span>
                         </>
                       ) : (
-                        <p className="pq-price">₹{(p.price || 0).toLocaleString('en-IN')}</p>
+                        <p className="pq-price">â‚¹{(p.price || 0).toLocaleString('en-IN')}</p>
                       )}
                     </div>
                     <div className="pq-actions">
@@ -7431,7 +7616,7 @@ export default function ProductManager() {
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {allProductSizes.map(size => {
-                          const isOut = p.sizeStock?.[size] === false;
+                          const isOut = Number(p.sizeStock?.[size] || 0) <= 0;
                           return (
                             <button key={size} onClick={() => quickToggleStock(p.id, size, isOut)} style={{
                               padding: '4px 10px', fontSize: 11,
@@ -7459,7 +7644,6 @@ export default function ProductManager() {
   );
 }
 
-
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\SaleBannerManager.css =====
 
 .sale-banner-manager { max-width: 700px; }
@@ -7467,7 +7651,7 @@ export default function ProductManager() {
 .sbm-info-card { margin-bottom: 20px; background: #fafaf8; }
 .sbm-info-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .sbm-info-list li { font-family: 'Jost', sans-serif; font-size: 13px; color: #555; line-height: 1.6; padding-left: 16px; position: relative; }
-.sbm-info-list li::before { content: '→'; position: absolute; left: 0; color: #aaa; }
+.sbm-info-list li::before { content: 'â†’'; position: absolute; left: 0; color: #aaa; }
 
 /* Preview bar */
 .sbm-preview-bar {
@@ -7504,7 +7688,6 @@ export default function ProductManager() {
 .sbm-preset-btn:hover { transform: scale(1.12); }
 .sbm-preset-btn.active { border-color: #1a1a1a; transform: scale(1.1); }
 .form-hint { font-family: 'Jost', sans-serif; font-size: 11px; color: #aaa; margin-top: 5px; font-style: italic; }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\pages\SaleBannerManager.js =====
 
@@ -7605,7 +7788,7 @@ export default function SaleBannerManager() {
     setSaving(true);
     await setDoc(doc(db, 'site', 'sale_banner'), banner);
     setSaving(false);
-    showToast(banner.active ? `Sale LIVE — ${banner.discountPercent}% off ${banner.saleMode === 'all' ? 'all products' : banner.saleMode === 'categories' ? banner.categories.length + ' categories' : banner.productIds.length + ' products'}! 🚀` : 'Banner hidden ✓');
+    showToast(banner.active ? `Sale LIVE â€” ${banner.discountPercent}% off ${banner.saleMode === 'all' ? 'all products' : banner.saleMode === 'categories' ? banner.categories.length + ' categories' : banner.productIds.length + ' products'}! ðŸš€` : 'Banner hidden âœ“');
   };
 
   const toggleCategory = (catId) => {
@@ -7663,7 +7846,7 @@ export default function SaleBannerManager() {
       {/* Live preview */}
       {preview && banner.text && (
         <div className="sbm-preview-bar" style={{ background: banner.bgColor, color: banner.textColor }}>
-          🏷 {banner.text} {banner.discountPercent > 0 && `· ${banner.discountPercent}% OFF`} &nbsp;<span className="sbm-preview-cta">SHOP NOW →</span>
+          ðŸ· {banner.text} {banner.discountPercent > 0 && `Â· ${banner.discountPercent}% OFF`} &nbsp;<span className="sbm-preview-cta">SHOP NOW â†’</span>
         </div>
       )}
 
@@ -7674,8 +7857,8 @@ export default function SaleBannerManager() {
             <p className="sbm-toggle-label">Sale Status</p>
             <p className="sbm-toggle-sub">
               {banner.active 
-                ? `🟢 LIVE — ${banner.discountPercent}% off applied to ${affectedCount} product(s)` 
-                : '⚫ Hidden — sale not active'}
+                ? `ðŸŸ¢ LIVE â€” ${banner.discountPercent}% off applied to ${affectedCount} product(s)` 
+                : 'âš« Hidden â€” sale not active'}
             </p>
           </div>
           <label className="toggle-switch">
@@ -7687,7 +7870,7 @@ export default function SaleBannerManager() {
         {/* Text */}
         <div className="form-field" style={{ marginTop: 20 }}>
           <label className="field-label">Banner Text *</label>
-          <input className="field-input" placeholder="e.g. ✨ FESTIVE SALE — Up to 47% off"
+          <input className="field-input" placeholder="e.g. âœ¨ FESTIVE SALE â€” Up to 47% off"
             value={banner.text} onChange={e => setBanner({ ...banner, text: e.target.value })} />
         </div>
 
@@ -7715,9 +7898,9 @@ export default function SaleBannerManager() {
           <label className="field-label">Apply Sale To *</label>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 8 }}>
             {[
-              { v: 'all', l: '🌐 All Products' },
-              { v: 'categories', l: '📁 Selected Categories' },
-              { v: 'products', l: '🎯 Specific Products' },
+              { v: 'all', l: 'ðŸŒ All Products' },
+              { v: 'categories', l: 'ðŸ“ Selected Categories' },
+              { v: 'products', l: 'ðŸŽ¯ Specific Products' },
             ].map(opt => (
               <button key={opt.v} type="button"
                 onClick={() => setBanner({ ...banner, saleMode: opt.v })}
@@ -7767,7 +7950,7 @@ export default function SaleBannerManager() {
             </div>
             {banner.categories.length > 0 && (
               <p style={{ marginTop: 12, fontSize: 12, color: '#2d6a4f' }}>
-                ✓ {affectedCount} products will get {banner.discountPercent}% off
+                âœ“ {affectedCount} products will get {banner.discountPercent}% off
               </p>
             )}
           </div>
@@ -7837,11 +8020,11 @@ export default function SaleBannerManager() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 13, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
-                      <p style={{ fontSize: 11, color: '#999' }}>{p.category} · ₹{(p.price || 0).toLocaleString('en-IN')}</p>
+                      <p style={{ fontSize: 11, color: '#999' }}>{p.category} Â· â‚¹{(p.price || 0).toLocaleString('en-IN')}</p>
                     </div>
                     {isSelected && banner.discountPercent > 0 && (
                       <span style={{ fontSize: 11, color: '#e74c3c', fontWeight: 600 }}>
-                        ₹{Math.round((p.price || 0) * (1 - banner.discountPercent / 100)).toLocaleString('en-IN')}
+                        â‚¹{Math.round((p.price || 0) * (1 - banner.discountPercent / 100)).toLocaleString('en-IN')}
                       </span>
                     )}
                   </div>
@@ -7853,7 +8036,7 @@ export default function SaleBannerManager() {
 
         {banner.saleMode === 'all' && (
           <div style={{ marginTop: 16, padding: 14, background: '#fff8f0', borderRadius: 10, fontSize: 13, color: '#856404' }}>
-            ⚠️ Sale will apply to <strong>ALL {allFbProducts.length} products</strong> in the store.
+            âš ï¸ Sale will apply to <strong>ALL {allFbProducts.length} products</strong> in the store.
           </div>
         )}
 
@@ -7892,10 +8075,10 @@ export default function SaleBannerManager() {
 
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <button className="btn-primary" onClick={save} disabled={saving || !banner.text.trim()}>
-            {saving ? 'Saving...' : banner.active ? '🚀 Save & Go Live' : 'Save Changes'}
+            {saving ? 'Saving...' : banner.active ? 'ðŸš€ Save & Go Live' : 'Save Changes'}
           </button>
           <button className="btn-secondary" onClick={() => setPreview(p => !p)}>
-            {preview ? 'Hide Preview' : '👁 Preview'}
+            {preview ? 'Hide Preview' : 'ðŸ‘ Preview'}
           </button>
         </div>
       </div>
@@ -7905,7 +8088,7 @@ export default function SaleBannerManager() {
         <ul className="sbm-info-list">
           <li>Set the <strong>discount percentage</strong> (e.g. 47%)</li>
           <li>Choose <strong>which products</strong> get the discount: all, by category, or specific products</li>
-          <li>When <strong>active</strong>, prices on the client site automatically update — original price gets a strikethrough, new discounted price shows in red</li>
+          <li>When <strong>active</strong>, prices on the client site automatically update â€” original price gets a strikethrough, new discounted price shows in red</li>
           <li>Toggle <strong>off</strong> to instantly remove the sale (prices return to normal)</li>
           <li>This works independently from per-product sale prices (which still take priority)</li>
         </ul>
@@ -7913,7 +8096,6 @@ export default function SaleBannerManager() {
     </div>
   );
 }
-
 
 ===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\styles\global.css =====
 
@@ -7939,7 +8121,7 @@ img { display: block; }
 button { cursor: pointer; font-family: 'Jost', sans-serif; }
 a { text-decoration: none; color: inherit; }
 
-/* ── APP SHELL LAYOUT ── */
+/* â”€â”€ APP SHELL LAYOUT â”€â”€ */
 .app-shell {
   display: flex;
   min-height: 100vh;
@@ -7953,7 +8135,7 @@ a { text-decoration: none; color: inherit; }
   overflow-x: hidden;
 }
 
-/* ── Card ── */
+/* â”€â”€ Card â”€â”€ */
 .card {
   background: #fff;
   border-radius: 14px;
@@ -7961,7 +8143,7 @@ a { text-decoration: none; color: inherit; }
   padding: 24px;
 }
 
-/* ── Form Elements ── */
+/* â”€â”€ Form Elements â”€â”€ */
 .field-label {
   font-family: 'Jost', sans-serif;
   font-size: 11px; font-weight: 600;
@@ -7990,7 +8172,7 @@ select.field-input {
 
 textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.7; }
 
-/* ── Buttons ── */
+/* â”€â”€ Buttons â”€â”€ */
 .btn-primary {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 12px 28px;
@@ -8014,7 +8196,7 @@ textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.7; }
 }
 .btn-secondary:hover { border-color: #999; color: #333; }
 
-/* ── Badges ── */
+/* â”€â”€ Badges â”€â”€ */
 .badge {
   display: inline-block; padding: 3px 12px;
   border-radius: 100px;
@@ -8026,7 +8208,7 @@ textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.7; }
 .badge-gold  { background: #fff3cd; color: #856404; }
 .badge-gray  { background: #f0f0f0; color: #888; }
 
-/* ── Page Header (shared) ── */
+/* â”€â”€ Page Header (shared) â”€â”€ */
 .page-header {
   display: flex; align-items: flex-start;
   justify-content: space-between; margin-bottom: 28px;
@@ -8038,7 +8220,7 @@ textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.7; }
 }
 .page-sub { font-size: 13px; color: #999; font-weight: 300; }
 
-/* ── Toast ── */
+/* â”€â”€ Toast â”€â”€ */
 .toast {
   position: fixed; bottom: 24px; left: 50%;
   transform: translateX(-50%) translateY(20px);
@@ -8055,12 +8237,12 @@ textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.7; }
 .toast.success { background: #1a1a1a; }
 .toast.error   { background: #c0392b; }
 
-/* ── Scrollbar ── */
+/* â”€â”€ Scrollbar â”€â”€ */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
 
-/* ── MOBILE RESPONSIVE LAYOUT ── */
+/* â”€â”€ MOBILE RESPONSIVE LAYOUT â”€â”€ */
 @media (max-width: 768px) {
   .app-main {
     margin-left: 0;
@@ -8105,81 +8287,3 @@ textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.7; }
   .cat-add-layout { grid-template-columns: 1fr !important; }
   .page-header { flex-direction: column; align-items: flex-start; }
 }
-
-
-===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\App.js =====
-
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/Dashboard';
-import ProductManager from './pages/ProductManager';
-import CategoryManager from './pages/CategoryManager';
-import CarouselManager from './pages/CarouselManager';
-import ContentManager from './pages/ContentManager';
-import OrdersPage from './pages/OrdersPage';
-import FooterManager from './pages/FooterManager';
-import SaleBannerManager from './pages/SaleBannerManager';
-import HeroManager from './pages/HeroManager';
-import CouponManager from './pages/CouponManager';
-import CollectionManager from './pages/CollectionManager';
-import AnnouncementManager from './pages/AnnouncementManager';
-import './styles/global.css';
-
-export const ToastContext = React.createContext();
-
-export default function App() {
-  const [loggedIn, setLoggedIn] = useState(localStorage.getItem('aurelia_admin') === 'true');
-  const [toast, setToast] = useState({ show: false, msg: '', type: 'success' });
-
-  const showToast = (msg, type = 'success') => {
-    setToast({ show: true, msg, type });
-    setTimeout(() => setToast(t => ({ ...t, show: false })), 3000);
-  };
-
-  if (!loggedIn) return (
-    <LoginPage onLogin={() => { localStorage.setItem('aurelia_admin', 'true'); setLoggedIn(true); }} />
-  );
-
-  return (
-    <ToastContext.Provider value={{ showToast }}>
-      <BrowserRouter>
-        <div className="app-shell">
-          <Sidebar onLogout={() => { localStorage.removeItem('aurelia_admin'); setLoggedIn(false); }} />
-          <main className="app-main">
-            <Routes>
-              <Route path="/"            element={<Navigate to="/dashboard" />} />
-              <Route path="/dashboard"   element={<Dashboard />} />
-              <Route path="/products"    element={<ProductManager />} />
-              <Route path="/categories"  element={<CategoryManager />} />
-              <Route path="/carousel"    element={<CarouselManager />} />
-              <Route path="/hero"        element={<HeroManager />} />
-              <Route path="/content"     element={<ContentManager />} />
-              <Route path="/orders"      element={<OrdersPage />} />
-              <Route path="/footer"      element={<FooterManager />} />
-              <Route path="/sale-banner" element={<SaleBannerManager />} />
-              <Route path="/coupons"     element={<CouponManager />} />
-              <Route path="/collections" element={<CollectionManager />} />
-              <Route path="/announcements" element={<AnnouncementManager />} />
-            </Routes>
-          </main>
-        </div>
-        <div className={`toast ${toast.type} ${toast.show ? 'show' : ''}`}>
-          {toast.type === 'success' ? '✓' : '✕'} &nbsp;{toast.msg}
-        </div>
-      </BrowserRouter>
-    </ToastContext.Provider>
-  );
-}
-
-
-===== C:\Users\vishal\OneDrive\Desktop\ps3\aurelia-admin\src\index.js =====
-
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './styles/global.css';
-import App from './App';
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<React.StrictMode><App /></React.StrictMode>);

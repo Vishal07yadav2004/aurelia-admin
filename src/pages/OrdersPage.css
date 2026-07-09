@@ -4,6 +4,71 @@
   display: grid; grid-template-columns: repeat(4,1fr);
   gap: 16px; margin-bottom: 24px;
 }
+
+.upi-settings-card {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+}
+.upi-settings-card h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+.upi-settings-card p:not(.items-heading) {
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  color: #999;
+  line-height: 1.6;
+}
+.upi-settings-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.upi-settings-card label span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #999;
+}
+.upi-settings-card input {
+  border: 1px solid #e0ddd8;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 11px 13px;
+  font-family: 'Jost', sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+.upi-settings-card input:focus {
+  border-color: #1a1a1a;
+  background: #fff;
+}
+.upi-settings-card button {
+  border: none;
+  border-radius: 100px;
+  background: #1a1a1a;
+  color: #fff;
+  padding: 12px 18px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.upi-settings-card button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .summary-box { text-align: center; padding: 20px; }
 .sum-val {
   font-family: 'Cormorant Garamond', serif;
@@ -41,7 +106,7 @@
 }
 .order-row-main:hover { background: #fdfcfb; }
 
-.order-row-left { display: flex; align-items: center; gap: 12px; min-width: 160px; }
+.order-row-left { display: flex; align-items: center; gap: 12px; min-width: 180px; }
 .order-id-text { font-family: monospace; font-size: 13px; font-weight: 600; color: #1a1a1a; }
 
 .order-row-mid {
@@ -64,13 +129,29 @@
   cursor: pointer; color: #555;
 }
 
+.verify-actions { display: flex; gap: 8px; }
+.approve-btn,
+.reject-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-family: 'Jost', sans-serif;
+  font-size: 11px;
+  cursor: pointer;
+}
+.approve-btn { background: #d4f5e2; color: #1f6b46; }
+.reject-btn { background: #fff0ee; color: #c0392b; }
+.approve-btn:disabled,
+.reject-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.badge-red { background: #fff0ee; color: #c0392b; }
+
 .order-items-expanded {
   border-top: 1px solid #f5f3ee;
   padding: 16px 20px;
   background: #fdfcfb;
 }
 
-/* Customer/Shipping/Payment grid */
 .order-details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -79,7 +160,6 @@
   padding-bottom: 16px;
   border-bottom: 1px solid #f0ece6;
 }
-.order-detail-section { }
 .order-detail-line {
   font-family: 'Jost', sans-serif;
   font-size: 12px; color: #555; line-height: 1.7;
@@ -89,6 +169,27 @@
   font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
   text-transform: uppercase; color: #bbb; margin-bottom: 12px;
 }
+
+.payment-proof-box {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid #f0ece6;
+  border-radius: 12px;
+  background: #fff;
+  margin-bottom: 16px;
+}
+.payment-proof-box img {
+  width: 160px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid #eee;
+  background: #fafafa;
+}
+
 .order-item-row {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 0; border-bottom: 1px solid #f5f3ee;
@@ -111,7 +212,6 @@
   font-size: 15px; font-style: italic; color: #555;
 }
 
-/* Order totals */
 .order-totals {
   margin-top: 14px;
   padding-top: 14px;
@@ -131,7 +231,6 @@
   font-family: 'Cormorant Garamond', serif; font-style: italic;
 }
 
-/* Breakdown sidebar */
 .items-breakdown { position: sticky; top: 20px; }
 .section-heading {
   font-family: 'Cormorant Garamond', serif;
@@ -161,5 +260,9 @@
 @media (max-width: 1000px) {
   .orders-layout { grid-template-columns: 1fr; }
   .orders-summary { grid-template-columns: repeat(2,1fr); }
+  .upi-settings-card { grid-template-columns: 1fr; align-items: stretch; }
   .order-details-grid { grid-template-columns: 1fr; }
+  .order-row-main,
+  .order-row-mid,
+  .order-row-right { flex-wrap: wrap; }
 }
