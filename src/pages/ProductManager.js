@@ -42,6 +42,7 @@ const CATEGORY_DEFAULTS = {
 
 const EMPTY = {
   name: '', price: '', category: '',
+  hsnNumber: '',
   subCategories: [],
   section: 'none',
   images: [], video: '',
@@ -262,6 +263,7 @@ export default function ProductManager() {
         name: form.name,
         price: Number(form.price),
         category: form.category,
+        hsnNumber: form.hsnNumber.trim(),
         subCategories: form.subCategories || [],
         subCategory: (form.subCategories || []).join(', '),
         section: form.section === 'none' ? '' : form.section,
@@ -333,6 +335,7 @@ export default function ProductManager() {
       name: p.name || '',
       price: String(p.price || ''),
       category: p.category || '',
+      hsnNumber: p.hsnNumber || '',
       subCategories: p.subCategories?.length
         ? p.subCategories
         : p.subCategory
@@ -449,6 +452,16 @@ export default function ProductManager() {
                     <option value="">— Select category —</option>
                     {catOptions.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
+                </div>
+                <div className="form-field">
+                  <label className="field-label">HSN Number <span style={{ color: '#bbb', fontWeight: 400 }}>(optional)</span></label>
+                  <input
+                    className="field-input"
+                    placeholder="e.g. 7113"
+                    value={form.hsnNumber}
+                    onChange={e => setForm({ ...form, hsnNumber: e.target.value.replace(/[^0-9]/g, '').slice(0, 8) })}
+                  />
+                  <p className="form-hint">Admin-only field for GST filing. It is not shown on the client site.</p>
                 </div>
                 <div className="form-field" style={{ gridColumn: '1/-1' }}>
                   <label className="field-label">Show in Homepage Section</label>
@@ -1007,6 +1020,15 @@ export default function ProductManager() {
                             letterSpacing: '0.05em',
                           }}>
                             {p.productSKU || `SKU-${String(p.productNum).padStart(3, '0')}`}
+                          </span>
+                        )}
+                        {p.hsnNumber && (
+                          <span style={{
+                            fontFamily: 'monospace', fontSize: 10, color: '#9b7a36',
+                            background: '#fff8e5', padding: '1px 6px', borderRadius: 4,
+                            letterSpacing: '0.05em',
+                          }}>
+                            HSN-{p.hsnNumber}
                           </span>
                         )}
                       </div>

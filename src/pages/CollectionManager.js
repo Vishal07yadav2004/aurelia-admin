@@ -6,30 +6,33 @@ import { Plus, Trash2, X, Pencil, GripVertical, Eye } from 'lucide-react';
 import './CollectionManager.css';
 
 const DEFAULT_COLLECTIONS = [
-  { id: 'bestSellers', title: 'Best Sellers', subtitle: 'Our most loved pieces by customers', link: '/shop?section=bestSellers', tag: 'POPULAR', icon: '⭐', active: true },
-  { id: 'newArrivals', title: 'New Arrivals', subtitle: 'Fresh additions to our collection', link: '/shop?section=newArrivals', tag: 'NEW', icon: '✨', active: true },
-  { id: 'under99', title: 'Under ₹99', subtitle: 'Affordable elegance for every budget', link: '/shop?maxPrice=99', tag: 'BUDGET', icon: '💎', active: true },
-  { id: 'r99to199', title: '₹99 – ₹199', subtitle: 'Beautiful pieces at great value', link: '/shop?minPrice=99&maxPrice=199', tag: 'VALUE', icon: '💍', active: true },
-  { id: 'r199to299', title: '₹199 – ₹299', subtitle: 'Premium craftsmanship, mid-range prices', link: '/shop?minPrice=199&maxPrice=299', tag: 'MID-RANGE', icon: '👑', active: true },
-  { id: 'r299to399', title: '₹299 – ₹399', subtitle: 'Luxury pieces for special occasions', link: '/shop?minPrice=299&maxPrice=399', tag: 'PREMIUM', icon: '🌟', active: true },
-  { id: 'above499', title: '₹499 & Above', subtitle: 'Exclusive high-end fine jewellery', link: '/shop?minPrice=499', tag: 'LUXURY', icon: '♛', active: true },
-  { id: 'onSale', title: 'On Sale', subtitle: 'Grab the best deals — limited time offers', link: '/shop?sale=true', tag: 'SALE', icon: '🏷', active: true },
+  { id: 'bestSellers', title: 'Best Sellers', subtitle: 'Our most loved pieces by customers', link: '/shop?section=bestSellers', tag: 'POPULAR', icon: '⭐', ctaText: 'Explore collection', active: true },
+  { id: 'newArrivals', title: 'New Arrivals', subtitle: 'Fresh additions to our collection', link: '/shop?section=newArrivals', tag: 'NEW', icon: '✨', ctaText: 'See what is new', active: true },
+  { id: 'onSale', title: 'On Sale', subtitle: 'Good style. Very good prices.', link: '/shop?sale=true', tag: 'BEST VALUE', icon: '🏷', ctaText: 'Shop sale', active: true },
+  { id: 'under99', title: 'Under ₹99', subtitle: 'Affordable elegance for every budget', link: '/shop?maxPrice=99', tag: 'BUDGET', icon: '💎', ctaText: 'Shop under ₹99', active: true },
+  { id: 'r99to199', title: '₹99 – ₹199', subtitle: 'Beautiful pieces at great value', link: '/shop?minPrice=99&maxPrice=199', tag: 'VALUE', icon: '💍', ctaText: 'Shop ₹99 — ₹199', active: true },
+  { id: 'r199to299', title: '₹199 – ₹299', subtitle: 'Premium craftsmanship, mid-range prices', link: '/shop?minPrice=199&maxPrice=299', tag: 'MID-RANGE', icon: '👑', ctaText: 'Shop ₹199 — ₹299', active: true },
+  { id: 'r299to399', title: '₹299 – ₹399', subtitle: 'Luxury pieces for special occasions', link: '/shop?minPrice=299&maxPrice=399', tag: 'PREMIUM', icon: '🌟', ctaText: 'Shop ₹299 — ₹399', active: true },
+  { id: 'above499', title: '₹499 & Above', subtitle: 'Exclusive high-end fine jewellery', link: '/shop?minPrice=499', tag: 'LUXURY', icon: '♛', ctaText: 'Shop premium', active: true },
+  { id: 'combo', title: 'Combo Sets', subtitle: 'Mix & match sets at special prices', link: '/shop?q=combo', tag: 'COMBO', icon: '🎁', ctaText: 'Shop combos', active: true },
 ];
 
 const LINK_TYPES = [
   { value: 'section', label: 'Section (Best Sellers / New Arrivals)' },
   { value: 'price', label: 'Price Range' },
   { value: 'sale', label: 'On Sale Products' },
+  { value: 'combo', label: 'Combo Search' },
   { value: 'category', label: 'Category' },
   { value: 'custom', label: 'Custom URL' },
 ];
 
-const ICON_OPTIONS = ['⭐', '✨', '💎', '💍', '👑', '🌟', '♛', '🏷', '🎁', '💝', '🔥', '✦', '♥', '🌸', '💫', '🎀'];
+const ICON_OPTIONS = ['⭐', '✨', '💎', '💍', '👑', '🌟', '♛', '🏷', '🎁', '💐', '🔥', '✦', '♥', '🌸', '💫', '🎀'];
 
 const EMPTY_COLLECTION = {
   title: '',
   subtitle: '',
   tag: '',
+  ctaText: '',
   icon: '✨',
   link: '',
   active: true,
@@ -93,6 +96,8 @@ export default function CollectionManager() {
         return '/shop';
       case 'sale':
         return '/shop?sale=true';
+      case 'combo':
+        return '/shop?q=combo';
       case 'category':
         return `/shop?cat=${form.category}`;
       case 'custom':
@@ -113,6 +118,7 @@ export default function CollectionManager() {
     if (link.includes('section=bestSellers')) { linkType = 'section'; section = 'bestSellers'; }
     else if (link.includes('section=newArrivals')) { linkType = 'section'; section = 'newArrivals'; }
     else if (link.includes('sale=true')) { linkType = 'sale'; }
+    else if (link.includes('q=combo')) { linkType = 'combo'; }
     else if (link.includes('cat=')) { linkType = 'category'; category = link.split('cat=')[1]?.split('&')[0] || ''; }
     else if (link.includes('minPrice=') || link.includes('maxPrice=')) {
       linkType = 'price';
@@ -133,6 +139,7 @@ export default function CollectionManager() {
       title: form.title.trim(),
       subtitle: form.subtitle.trim(),
       tag: form.tag.trim().toUpperCase(),
+      ctaText: form.ctaText.trim(),
       icon: form.icon,
       link: buildLink(),
       active: form.active,
@@ -232,6 +239,13 @@ export default function CollectionManager() {
                 placeholder="e.g. Affordable elegance for every budget" />
             </div>
 
+            <div className="form-field" style={{ gridColumn: '1 / -1' }}>
+              <label className="field-label">Button / CTA Text</label>
+              <input className="field-input" value={form.ctaText || ''}
+                onChange={e => setForm({ ...form, ctaText: e.target.value })}
+                placeholder="e.g. Shop sale" />
+            </div>
+
             <div className="form-field">
               <label className="field-label">Icon</label>
               <div className="cm-icon-grid">
@@ -310,6 +324,12 @@ export default function CollectionManager() {
                 ✓ This will show only products with active discounts
               </p>
             )}
+
+            {form.linkType === 'combo' && (
+              <p style={{ fontSize: 12, color: '#2d6a4f', fontStyle: 'italic' }}>
+                ✓ This links to /shop?q=combo
+              </p>
+            )}
           </div>
 
           {/* Preview */}
@@ -320,7 +340,7 @@ export default function CollectionManager() {
               <span className="cm-preview-tag">{form.tag || 'TAG'}</span>
               <p className="cm-preview-title">{form.title || 'Collection Title'}</p>
               <p className="cm-preview-sub">{form.subtitle || 'Description goes here'}</p>
-              <span className="cm-preview-link">Explore →</span>
+              <span className="cm-preview-link">{form.ctaText || 'Explore'} →</span>
             </div>
           </div>
 
@@ -357,6 +377,7 @@ export default function CollectionManager() {
                     {!col.active && <span className="cm-card-hidden">HIDDEN</span>}
                   </div>
                   <p className="cm-card-sub">{col.subtitle}</p>
+                  {col.ctaText && <p className="cm-card-sub">CTA: {col.ctaText}</p>}
                   <p className="cm-card-link-display">{col.link}</p>
                 </div>
               </div>
@@ -385,6 +406,7 @@ export default function CollectionManager() {
           <li><strong>Section</strong> type shows products marked as Best Sellers or New Arrivals in Product Manager</li>
           <li><strong>Price Range</strong> type filters products by their price automatically</li>
           <li><strong>On Sale</strong> shows only products with active discounts</li>
+          <li><strong>Combo Search</strong> links to combo search results at /shop?q=combo</li>
           <li><strong>Category</strong> links to a specific product category</li>
           <li>Use the ↑↓ arrows to reorder how cards appear on the client site</li>
           <li>Toggle the eye icon to hide/show a collection without deleting it</li>

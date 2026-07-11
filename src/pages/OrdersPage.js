@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { db } from '../firebase/config';
+import { db, auth } from '../firebase/config';
 import {
   collection,
   onSnapshot,
@@ -18,6 +18,23 @@ const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'completed', 'cancel
 
 const money = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;
 const displayId = (order) => order.visibleOrderId || (order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(0, 8).toUpperCase()}`);
+
+const sendOrderEmail = async (type, order) => {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error('Admin auth session expired. Please login again.');
+
+  const res = await fetch('/.netlify/functions/send-order-email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ type, order }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Email failed');
+};
 
 export default function OrdersPage() {
   const { showToast } = useContext(ToastContext);
@@ -65,8 +82,44 @@ export default function OrdersPage() {
     return bt - at;
   });
 
-  const updateStatus = async (id, status) => {
-    await updateDoc(doc(db, 'orders', id), { status, updatedAt: serverTimestamp() });
+  const updateStatus = async (order, status) => {
+    if (status === 'shipped') {
+      const courierName = window.prompt(`Courier / delivery company for ${displayId(order)}:`, order.shippingTracking?.courierName || '');
+      if (courierName === null) return;
+
+      const trackingNumber = window.prompt(`Tracking number for ${displayId(order)}:`, order.shippingTracking?.trackingNumber || '');
+      if (trackingNumber === null) return;
+
+      if (!courierName.trim() || !trackingNumber.trim()) {
+        showToast('Courier name and tracking number are required for shipped status', 'error');
+        return;
+      }
+
+      const shippingTracking = {
+        courierName: courierName.trim(),
+        trackingNumber: trackingNumber.trim(),
+        shippedAt: new Date().toISOString(),
+      };
+
+      const updatedOrder = { ...order, status: 'shipped', shippingTracking };
+
+      await updateDoc(doc(db, 'orders', order.id), {
+        status: 'shipped',
+        shippingTracking,
+        updatedAt: serverTimestamp(),
+      });
+
+      try {
+        await sendOrderEmail('shipped', updatedOrder);
+        showToast('Order shipped + email sent ✓');
+      } catch (err) {
+        console.error(err);
+        showToast(`Status saved, but email failed: ${err.message}`, 'error');
+      }
+      return;
+    }
+
+    await updateDoc(doc(db, 'orders', order.id), { status, updatedAt: serverTimestamp() });
     showToast(`Order status → ${status} ✓`);
   };
 
@@ -107,7 +160,14 @@ export default function OrdersPage() {
 
       await setDoc(doc(db, 'orders', orderNumber), approvedOrder);
       await deleteDoc(doc(db, 'pendingOrders', order.id));
-      showToast(`${displayId(order)} approved ✓`);
+
+      try {
+        await sendOrderEmail('verified', approvedOrder);
+        showToast(`${displayId(order)} approved + email sent ✓`);
+      } catch (err) {
+        console.error(err);
+        showToast(`Approved, but email failed: ${err.message}`, 'error');
+      }
     } catch (err) {
       console.error(err);
       showToast('Could not approve order', 'error');
@@ -318,7 +378,7 @@ export default function OrdersPage() {
                             className="status-select"
                             value={order.status || 'pending'}
                             onClick={e => e.stopPropagation()}
-                            onChange={e => updateStatus(order.id, e.target.value)}
+                            onChange={e => updateStatus(order, e.target.value)}
                           >
                             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                           </select>
@@ -347,6 +407,8 @@ export default function OrdersPage() {
                             <p className="order-detail-line">Payable: <strong>{money(order.payableAmount || order.total)}</strong></p>
                             {order.paymentProof?.amountPaid && <p className="order-detail-line">Amount Paid: <strong>{money(order.paymentProof.amountPaid)}</strong></p>}
                             {order.paymentProof?.utr && <p className="order-detail-line">UTR: <strong>{order.paymentProof.utr}</strong></p>}
+                            {order.shippingTracking?.courierName && <p className="order-detail-line">Courier: <strong>{order.shippingTracking.courierName}</strong></p>}
+                            {order.shippingTracking?.trackingNumber && <p className="order-detail-line">Tracking ID: <strong>{order.shippingTracking.trackingNumber}</strong></p>}
                             {order.couponCode && <p className="order-detail-line">Coupon: {order.couponCode}</p>}
                             {order.notes && <p className="order-detail-line" style={{ fontStyle: 'italic' }}>"{order.notes}"</p>}
                           </div>
