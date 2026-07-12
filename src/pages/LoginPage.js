@@ -30,7 +30,7 @@ export default function LoginPage({ onLogin }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo">AURELIA</div>
+        <div className="login-logo">Kanyamaa </div>
         <p className="login-sub">Admin Panel</p>
 
         <form onSubmit={handleLogin} className="login-form">

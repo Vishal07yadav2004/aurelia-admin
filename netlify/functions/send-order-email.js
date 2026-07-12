@@ -1,5 +1,6 @@
 const tls = require('tls');
 const admin = require('firebase-admin');
+// console.log('admin keys:', admin ? Object.keys(admin) : admin, 'apps:', admin?.apps);
 
 const ADMIN_UID = process.env.ADMIN_UID;
 

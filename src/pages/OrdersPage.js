@@ -20,17 +20,26 @@ const money = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;
 const displayId = (order) => order.visibleOrderId || (order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(0, 8).toUpperCase()}`);
 
 const sendOrderEmail = async (type, order) => {
-  const token = await auth.currentUser?.getIdToken();
+  let token;
+  try {
+    token = await auth.currentUser?.getIdToken();
+  } catch (tokenErr) {
+    console.error('getIdToken failed:', tokenErr);
+    throw new Error('Your admin session is corrupted — please log out and back in.');
+  }
   if (!token) throw new Error('Admin auth session expired. Please login again.');
 
-  const res = await fetch('/.netlify/functions/send-order-email', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ type, order }),
-  });
+  let res;
+  try {
+    res = await fetch('/.netlify/functions/send-order-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ type, order }),
+    });
+  } catch (netErr) {
+    console.error('Network/fetch failed:', netErr);
+    throw new Error('Could not reach the email function (network/CORS issue).');
+  }
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Email failed');
