@@ -8,3 +8,6 @@ build
 build/
 *.log
 node_modules
+
+# Local Netlify folder
+.netlify

@@ -35,7 +35,6 @@ const sendOrderEmail = async (type, order) => {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Email failed');
 };
-
 export default function OrdersPage() {
   const { showToast } = useContext(ToastContext);
   const [orders, setOrders] = useState([]);
