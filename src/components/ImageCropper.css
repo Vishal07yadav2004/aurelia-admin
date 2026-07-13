@@ -49,3 +49,10 @@
 .cropper-preview-tile img { width:100%; height:100%; object-fit:cover; display:block; }
 .cropper-preview-thumb { width: 64px; height:64px; border-radius:8px; overflow:hidden; background:#edeae4; }
 .cropper-preview-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+
+@media (max-width: 480px) {
+  .cropper-overlay { padding: 8px; align-items: flex-end; }
+  .cropper-modal { max-height: 94vh; border-radius: 16px 16px 0 0; }
+  .cropper-previews { gap: 12px; }
+  .cropper-preview-tile { width: 100%; }
+}

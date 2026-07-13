@@ -155,3 +155,11 @@
   .hero-content-grid { grid-template-columns: 1fr; }
   .hero-images-grid { grid-template-columns: 1fr 1fr; }
 }
+
+@media (max-width: 480px) {
+  .hero-images-grid { grid-template-columns: 1fr; }
+  .hero-stat-row { align-items: stretch; flex-direction: column; }
+  .hero-stat-remove { width: 100%; justify-content: center; }
+  .hero-preview-box { padding: 24px 18px; }
+  .hero-preview-stats { gap: 10px; justify-content: space-between; }
+}

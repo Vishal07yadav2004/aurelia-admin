@@ -223,3 +223,10 @@
   .cat-tiles { grid-template-columns: repeat(2, 1fr); }
   .cat-add-layout { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 480px) {
+  .cat-tiles { gap: 10px; }
+  .cat-tile { padding: 10px; }
+  .cat-image-change { opacity: 1; padding: 6px 10px; }
+  .cat-note { padding: 10px 12px; overflow-wrap: anywhere; }
+}

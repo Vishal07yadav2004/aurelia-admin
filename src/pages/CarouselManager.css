@@ -9,3 +9,9 @@
 .slide-remove-btn { background:none; border:1px solid #f0ddd8; color:#ccc; width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; }
 .slide-remove-btn:hover { background:#fff0ee; border-color:#e74c3c; color:#e74c3c; }
 .form-field { display:flex; flex-direction:column; gap:6px; }
+
+@media (max-width: 600px) {
+  .carousel-section-header { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .carousel-section-header .btn-primary { width: 100%; justify-content: center; }
+  .carousel-slides-grid { grid-template-columns: 1fr; }
+}

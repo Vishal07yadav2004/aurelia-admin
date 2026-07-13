@@ -135,4 +135,10 @@
 
 @media (max-width: 600px) {
   .ann-form-grid { grid-template-columns: 1fr; }
+  .ann-section-header { align-items: flex-start; gap: 10px; flex-direction: column; }
+  .ann-toggle-btn { width: 100%; justify-content: center; }
+  .ann-marquee-item-row,
+  .ann-add-item-row { align-items: stretch; }
+  .ann-marquee-item-row .field-input,
+  .ann-add-item-row .field-input { min-width: 0; }
 }

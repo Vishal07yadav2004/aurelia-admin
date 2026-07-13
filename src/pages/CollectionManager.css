@@ -171,4 +171,8 @@
   .cm-form-grid { grid-template-columns: 1fr; }
   .cm-card { flex-direction: column; align-items: flex-start; }
   .cm-card-actions { width: 100%; justify-content: flex-end; }
+  .cm-form-actions { flex-direction: column; }
+  .cm-preview-card { max-width: 100%; }
+  .cm-card-left { width: 100%; }
+  .cm-card-link-display { overflow-wrap: anywhere; }
 }

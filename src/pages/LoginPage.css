@@ -71,3 +71,10 @@
   margin-top: 20px;
   font-family: 'Jost', sans-serif;
 }
+
+@media (max-width: 480px) {
+  .login-page { padding: 12px; align-items: flex-start; padding-top: 8vh; }
+  .login-card { padding: 34px 22px 28px; border-radius: 16px; }
+  .login-logo { font-size: 28px; letter-spacing: 0.13em; }
+  .login-sub { margin-bottom: 28px; }
+}

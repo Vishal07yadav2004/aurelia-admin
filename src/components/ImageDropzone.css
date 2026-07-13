@@ -155,3 +155,11 @@
   border-radius: 4px;
   letter-spacing: 0.06em;
 }
+
+@media (max-width: 480px) {
+  .dropzone { padding: 20px 12px; }
+  .dropzone-url-row { width: 100%; }
+  .dropzone-url-row .field-input { min-width: 0; }
+  .dz-multi-grid { grid-template-columns: repeat(3, 1fr); }
+  .preview-action-btn { opacity: 1; transform: none; }
+}

@@ -199,3 +199,10 @@
   .review-form-grid { grid-template-columns: 1fr; }
   .reviews-grid-admin { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 480px) {
+  .product-pick-list { max-height: 180px; }
+  .review-card-top { align-items: flex-start; gap: 10px; }
+  .review-stars-row { flex-wrap: wrap; }
+  .desc-textarea { padding: 12px; }
+}

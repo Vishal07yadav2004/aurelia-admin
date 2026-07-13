@@ -266,3 +266,13 @@
   .order-row-mid,
   .order-row-right { flex-wrap: wrap; }
 }
+
+@media (max-width: 480px) {
+  .upi-settings-card { padding: 16px; gap: 12px; }
+  .summary-box { padding: 14px 8px; }
+  .sum-val { font-size: 27px; }
+  .verify-actions { width: 100%; }
+  .approve-btn, .reject-btn { flex: 1; }
+  .order-items-expanded { padding: 14px; }
+  .order-totals { max-width: 100%; }
+}

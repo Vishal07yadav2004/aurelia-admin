@@ -88,6 +88,17 @@
   .btn-primary, .btn-secondary { width:100%; justify-content:center; }
 }
 
+@media (max-width:480px) {
+  .media-grid { grid-template-columns: 1fr; }
+  .list-header { align-items: stretch; }
+  .filter-tabs { padding-bottom: 4px; }
+  .product-queue-item { padding: 12px; gap: 12px; }
+  .pq-info { min-width: calc(100% - 70px); }
+  .pq-meta { gap: 5px; }
+  .pq-category, .pq-section { font-size: 10px; padding: 2px 7px; }
+  .sale-preview-box { padding: 14px; }
+}
+
 /* Variants */
 .variant-card {
   background: #f9f7f3;

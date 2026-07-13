@@ -40,3 +40,10 @@
 .sbm-preset-btn:hover { transform: scale(1.12); }
 .sbm-preset-btn.active { border-color: #1a1a1a; transform: scale(1.1); }
 .form-hint { font-family: 'Jost', sans-serif; font-size: 11px; color: #aaa; margin-top: 5px; font-style: italic; }
+
+@media (max-width: 480px) {
+  .sbm-card { overflow: hidden; }
+  .sbm-toggle-row { align-items: flex-start; }
+  .sbm-preview-bar { padding: 10px 14px; }
+  .sbm-presets { gap: 8px; }
+}
