@@ -53,6 +53,29 @@
   padding: 10px 14px;
   text-align: center;
 }
+.login-success {
+  font-size: 13px;
+  color: #2d6a4f;
+  background: #eaf8ef;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: center;
+  line-height: 1.5;
+}
+.forgot-password-btn,
+.back-to-login-btn {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #666;
+  font-family: 'Jost', sans-serif;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.forgot-password-btn { margin-top: -6px; }
+.back-to-login-btn { width: 100%; text-align: center; }
 
 .login-btn {
   width: 100%;

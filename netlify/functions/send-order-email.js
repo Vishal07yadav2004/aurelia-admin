@@ -2,7 +2,7 @@ const tls = require('tls');
 const admin = require('firebase-admin');
 // console.log('admin keys:', admin ? Object.keys(admin) : admin, 'apps:', admin?.apps);
 
-const ADMIN_UID = process.env.ADMIN_UID;
+
 
 function initAdmin() {
   if (admin.apps.length) return;
@@ -178,7 +178,22 @@ exports.handler = async (event) => {
     if (!token) return { statusCode: 401, body: JSON.stringify({ error: 'Missing auth token' }) };
 
     const decoded = await admin.auth().verifyIdToken(token);
-    if (decoded.uid !== ADMIN_UID) return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden' }) };
+
+// Check whether the authenticated user exists in the admins collection
+    const adminDoc = await admin
+       .firestore()
+       .collection("admins")
+       .doc(decoded.uid)
+       .get();
+
+    if (!adminDoc.exists) {
+       return {
+          statusCode: 403,
+          body: JSON.stringify({
+          error: "Forbidden. You are not an authorized admin.",
+         }),
+  };
+}
 
     const { type, order } = JSON.parse(event.body || '{}');
     if (!order?.customer?.email) return { statusCode: 400, body: JSON.stringify({ error: 'Customer email missing' }) };
