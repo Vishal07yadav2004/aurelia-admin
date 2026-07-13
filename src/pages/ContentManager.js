@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { db } from '../firebase/config';
 import {
   collection, doc, setDoc, deleteDoc, onSnapshot,
-  query, orderBy, serverTimestamp, addDoc, updateDoc
+  query, orderBy, serverTimestamp, addDoc, updateDoc, writeBatch
 } from 'firebase/firestore';
 import { ToastContext } from '../App';
 import { Pencil, Trash2, Plus, X, Star } from 'lucide-react';
@@ -93,7 +93,7 @@ function DescriptionsTab({ products }) {
               </div>
               <div className="pick-info">
                 <p className="pick-name">{p.name}</p>
-                <p className="pick-price">${(p.price || 0).toLocaleString()}</p>
+                <p className="pick-price">₹{(p.price || 0).toLocaleString('en-IN')}</p>
               </div>
             </div>
           ))}
@@ -393,18 +393,27 @@ function BadgesTab({ products }) {
     setBadges(prev => prev.map((b, i) => i === idx ? { ...b, [field]: value } : b));
   };
 
+  const cleanedBadges = () => badges.map(b => ({
+    iconKey: b.iconKey || 'truck',
+    label: b.label.trim(),
+    sub: b.sub?.trim() || '',
+  }));
+
+  const validateBadges = () => {
+    if (badges.some(b => !b.label?.trim())) {
+      showToast('All badges must have a label', 'error');
+      return false;
+    }
+    return true;
+  };
+
   const handleSave = async () => {
     if (!selected) {
       showToast('Select a product first', 'error');
       return;
     }
 
-    // Validate badges
-    const invalid = badges.some(b => !b.label?.trim());
-    if (invalid) {
-      showToast('All badges must have a label', 'error');
-      return;
-    }
+    if (!validateBadges()) return;
 
     setSaving(true);
     try {
@@ -412,16 +421,36 @@ function BadgesTab({ products }) {
       await setDoc(
         doc(db, 'productBadges', String(selected.id)),
         {
-          badges: badges.map(b => ({
-            iconKey: b.iconKey || 'truck',
-            label:   b.label.trim(),
-            sub:     b.sub?.trim() || '',
-          })),
+          badges: cleanedBadges(),
         }
       );
       showToast('Trust badges saved ✓');
     } catch (err) {
       console.error('Save badges error:', err);
+      showToast(`Error: ${err.message}`, 'error');
+    }
+    setSaving(false);
+  };
+
+  const handleApplyToAll = async () => {
+    if (!selected) return;
+    if (!validateBadges()) return;
+    if (!window.confirm(`Apply these trust badges to all ${products.length} products? This will replace each product's current trust badges.`)) return;
+
+    const uniqueProducts = Array.from(new Map(products.map(product => [String(product.id), product])).values());
+    setSaving(true);
+    try {
+      const badgeData = cleanedBadges();
+      for (let start = 0; start < uniqueProducts.length; start += 500) {
+        const batch = writeBatch(db);
+        uniqueProducts.slice(start, start + 500).forEach(product => {
+          batch.set(doc(db, 'productBadges', String(product.id)), { badges: badgeData });
+        });
+        await batch.commit();
+      }
+      showToast(`Trust badges applied to ${uniqueProducts.length} products ✓`);
+    } catch (err) {
+      console.error('Apply badges to all products error:', err);
       showToast(`Error: ${err.message}`, 'error');
     }
     setSaving(false);
@@ -455,7 +484,7 @@ function BadgesTab({ products }) {
       {/* LEFT: product picker */}
       <div className="card product-picker">
         <p className="picker-title">Select Product</p>
-        <p className="picker-sub">Edit trust badges shown on this product's page</p>
+        <p className="picker-sub">Edit one product, then optionally apply those badges to every product.</p>
         <input
           className="field-input picker-search"
           placeholder="Search products..."
@@ -475,9 +504,7 @@ function BadgesTab({ products }) {
               </div>
               <div className="pick-info">
                 <p className="pick-name">{p.name}</p>
-                <p className="pick-price">
-                  ₹{(p.price || 0).toLocaleString('en-IN')}
-                </p>
+                <p className="pick-price">₹{(p.price || 0).toLocaleString('en-IN')}</p>
               </div>
             </div>
           ))}
@@ -590,6 +617,9 @@ function BadgesTab({ products }) {
             <div style={{ display: 'flex', gap: 10, marginTop: 8, paddingTop: 16, borderTop: '1px solid #f0ece6' }}>
               <button className="btn-primary" onClick={handleSave} disabled={saving}>
                 {saving ? 'Saving...' : 'Save Badges'}
+              </button>
+              <button className="btn-secondary" onClick={handleApplyToAll} disabled={saving}>
+                Apply to All Products
               </button>
               <button className="btn-secondary" onClick={handleReset} disabled={saving}>
                 Reset to Defaults

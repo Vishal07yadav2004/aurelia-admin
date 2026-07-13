@@ -19,6 +19,9 @@ const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'completed', 'cancel
 
 const money = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;
 const displayId = (order) => order.visibleOrderId || (order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(0, 8).toUpperCase()}`);
+const monthValue = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+const csvValue = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+const orderDate = (order) => order.createdAt?.toDate ? order.createdAt.toDate() : null;
 
 const sendOrderEmail = async (type, order) => {
   let token;
@@ -55,6 +58,7 @@ export default function OrdersPage() {
   const [busyId, setBusyId] = useState('');
   const [upiForm, setUpiForm] = useState({ upiId: '', upiName: 'KANYAMAA' });
   const [savingUpi, setSavingUpi] = useState(false);
+  const [reportMonth, setReportMonth] = useState(monthValue());
   const [loaded, setLoaded] = useState({ orders: false, pending: false, payment: false });
 
   useEffect(() => {
@@ -191,11 +195,21 @@ export default function OrdersPage() {
   };
 
   const rejectOrder = async (order) => {
-    const reason = window.prompt(`Reject ${displayId(order)}? Optional reason:`, '');
+    const reason = window.prompt(`Reject ${displayId(order)}? Enter the reason for the customer:`, '');
     if (reason === null) return;
+    if (!reason.trim()) {
+      showToast('A rejection reason is required', 'error');
+      return;
+    }
 
     setBusyId(order.id);
     try {
+      const rejectedOrder = {
+        ...order,
+        status: 'rejected',
+        paymentStatus: 'rejected',
+        rejectionReason: reason.trim(),
+      };
       await updateDoc(doc(db, 'pendingOrders', order.id), {
         status: 'rejected',
         paymentStatus: 'rejected',
@@ -203,7 +217,13 @@ export default function OrdersPage() {
         rejectedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      showToast(`${displayId(order)} rejected`);
+      try {
+        await sendOrderEmail('rejected', rejectedOrder);
+        showToast(`${displayId(order)} rejected + email sent ✓`);
+      } catch (emailError) {
+        console.error(emailError);
+        showToast(`Order rejected, but email failed: ${emailError.message}`, 'error');
+      }
     } catch (err) {
       console.error(err);
       showToast('Could not reject order', 'error');
@@ -234,6 +254,36 @@ export default function OrdersPage() {
       showToast('Could not save UPI settings', 'error');
     }
     setSavingUpi(false);
+  };
+
+  const downloadMonthlyReport = () => {
+    if (!reportMonth) return;
+
+    const [year, month] = reportMonth.split('-').map(Number);
+    const monthOrders = allOrders.filter(order => {
+      const date = orderDate(order);
+      return date && date.getFullYear() === year && date.getMonth() + 1 === month;
+    });
+    const headers = ['Order ID', 'Order Date', 'Status', 'Payment Status', 'Customer Name', 'Email', 'Phone', 'Shipping Address', 'Items Bought', 'Item Quantity', 'Order Amount', 'Amount Paid', 'UTR', 'Coupon', 'Rejection Reason'];
+    const rows = monthOrders.map(order => {
+      const items = order.items || [];
+      const address = order.shippingAddress || {};
+      return [
+        displayId(order), orderDate(order)?.toLocaleDateString('en-IN') || '', order.status || 'payment pending', order.paymentStatus || 'pending',
+        `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim(), order.customer?.email, order.customer?.phone,
+        [address.address, address.apartment, address.city, address.state, address.zip].filter(Boolean).join(', '),
+        items.map(item => `${item.name || 'Item'} x${item.qty || 0}`).join('; '), items.reduce((total, item) => total + Number(item.qty || 0), 0),
+        Number(order.payableAmount || order.total || 0), Number(order.paymentProof?.amountPaid || 0), order.paymentProof?.utr, order.couponCode, order.rejectionReason,
+      ];
+    });
+    const csv = [headers, ...rows].map(row => row.map(csvValue).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `orders-summary-${reportMonth}.csv`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(`${monthOrders.length} order${monthOrders.length === 1 ? '' : 's'} exported for ${reportMonth}`);
   };
 
   const filtered = allOrders
@@ -330,6 +380,18 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      <div className="card monthly-report-card">
+        <div>
+          <p className="items-heading">Monthly order summary</p>
+          <p>Download every order for a selected month, including customer details, products, amounts paid, and rejection reasons.</p>
+        </div>
+        <label>
+          <span>Month</span>
+          <input type="month" value={reportMonth} max={monthValue()} onChange={e => setReportMonth(e.target.value)} />
+        </label>
+        <button type="button" onClick={downloadMonthlyReport}>Download Excel</button>
+      </div>
+
       <div className="orders-layout">
         <div className="orders-main">
           <div className="orders-toolbar">
@@ -357,6 +419,7 @@ export default function OrdersPage() {
               {filtered.map(order => {
                 const isPendingPayment = !order.approved;
                 const status = order.paymentStatus === 'rejected' ? 'rejected' : (isPendingPayment ? 'payment_pending' : order.status || 'pending');
+                const isRejected = status === 'rejected';
 
                 return (
                   <div className="order-row card" key={`${order.source}-${order.id}`}>
@@ -375,7 +438,7 @@ export default function OrdersPage() {
                       <div className="order-row-right">
                         <span className="order-total">{money(order.payableAmount || order.total)}</span>
 
-                        {isPendingPayment ? (
+                        {isPendingPayment && !isRejected ? (
                           <div className="verify-actions" onClick={e => e.stopPropagation()}>
                             <button
                               className="approve-btn"
@@ -388,7 +451,7 @@ export default function OrdersPage() {
                               Reject
                             </button>
                           </div>
-                        ) : (
+                        ) : !isRejected ? (
                           <select
                             className="status-select"
                             value={order.status || 'pending'}
@@ -397,7 +460,7 @@ export default function OrdersPage() {
                           >
                             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                           </select>
-                        )}
+                        ) : null}
                       </div>
                     </div>
 
@@ -426,6 +489,7 @@ export default function OrdersPage() {
                             {order.shippingTracking?.trackingNumber && <p className="order-detail-line">Tracking ID: <strong>{order.shippingTracking.trackingNumber}</strong></p>}
                             {order.couponCode && <p className="order-detail-line">Coupon: {order.couponCode}</p>}
                             {order.notes && <p className="order-detail-line" style={{ fontStyle: 'italic' }}>"{order.notes}"</p>}
+                            {order.rejectionReason && <p className="order-detail-line rejection-reason"><strong>Rejection reason:</strong> {order.rejectionReason}</p>}
                           </div>
                         </div>
 

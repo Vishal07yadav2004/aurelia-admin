@@ -128,6 +128,7 @@ async function sendGmail({ to, subject, html, text }) {
 const money = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`;
 const fullName = (customer = {}) => `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Customer';
 const displayOrderId = (order = {}) => order.visibleOrderId || (order.orderNumber ? `#${order.orderNumber}` : '');
+const escapeHtml = (value) => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 
 function itemsRows(order) {
   return (order.items || []).map(item => `
@@ -180,6 +181,32 @@ function shippedEmail(order) {
   };
 }
 
+function rejectedEmail(order) {
+  const reason = order.rejectionReason || 'We were unable to verify this order.';
+  return {
+    subject: `Update on your KANYAMAA order ${displayOrderId(order)}`,
+    text: `Hi ${fullName(order.customer)}, we are sorry, but we are unable to process your order ${displayOrderId(order)}. Reason: ${reason}. Order total: ${money(order.total || order.payableAmount)}. Please contact us if you need help.`,
+    html: `
+      <div style="font-family:Arial,sans-serif;color:#222;line-height:1.6;max-width:640px;">
+        <h2>We are sorry</h2>
+        <p>Hi ${escapeHtml(fullName(order.customer))},</p>
+        <p>We are sorry, but we are unable to process your order <strong>${escapeHtml(displayOrderId(order))}</strong>.</p>
+        <div style="margin:18px 0;padding:14px 16px;border-left:4px solid #c0392b;background:#fff4f2;">
+          <strong>Reason for rejection</strong><br>
+          ${escapeHtml(reason)}
+        </div>
+        <p><strong>Order details</strong></p>
+        <table style="width:100%;border-collapse:collapse;margin:12px 0 18px;">
+          <thead><tr><th align="left">Product</th><th>Qty</th><th align="right">Amount</th></tr></thead>
+          <tbody>${itemsRows(order)}</tbody>
+        </table>
+        <p><strong>Order total:</strong> ${money(order.total || order.payableAmount)}</p>
+        <p>If you have any questions or need assistance, please contact us. We are here to help.</p>
+        <p>With care,<br>KANYAMAA</p>
+      </div>`,
+  };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
@@ -211,7 +238,7 @@ exports.handler = async (event) => {
     const { type, order } = JSON.parse(event.body || '{}');
     if (!order?.customer?.email) return { statusCode: 400, body: JSON.stringify({ error: 'Customer email missing' }) };
 
-    const email = type === 'shipped' ? shippedEmail(order) : verifiedEmail(order);
+    const email = type === 'shipped' ? shippedEmail(order) : type === 'rejected' ? rejectedEmail(order) : verifiedEmail(order);
     await sendGmail({ to: order.customer.email, ...email });
 
     return { statusCode: 200, body: JSON.stringify({ ok: true }) };

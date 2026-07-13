@@ -59,6 +59,13 @@
 }
 .order-id { font-family: monospace; font-size: 12px; color: #888; }
 .order-date { color: #aaa; font-size: 12px; }
+.dashboard-order-actions { width: 34px; padding-right: 0 !important; text-align: right; }
+.remove-dashboard-order {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border: 1px solid #f0d5d1; border-radius: 7px;
+  background: #fff7f5; color: #c0392b; cursor: pointer;
+}
+.remove-dashboard-order:hover { background: #fff0ee; border-color: #d98b82; }
 
 .top-item {
   display: flex; align-items: center; gap: 12px;

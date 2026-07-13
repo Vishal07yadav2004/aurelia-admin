@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase/config';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { Package, ShoppingBag, TrendingUp, IndianRupee } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { Package, ShoppingBag, TrendingUp, IndianRupee, X } from 'lucide-react';
 import PageSkeleton from '../components/PageSkeleton';
 import './Dashboard.css';
 
@@ -28,20 +28,34 @@ export default function Dashboard() {
 
   if (!loaded.products || !loaded.orders) return <PageSkeleton variant="dashboard" />;
 
-  const totalRevenue  = orders.reduce((s, o) => s + (o.total || 0), 0);
-  const totalItems    = orders.reduce((s, o) => s + (o.items?.reduce((a,i) => a + i.qty, 0) || 0), 0);
+  const dashboardOrders = orders.filter(o => !o.dashboardHidden);
+  const totalRevenue  = dashboardOrders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalItems    = dashboardOrders.reduce((s, o) => s + (o.items?.reduce((a,i) => a + i.qty, 0) || 0), 0);
   const totalProducts = products.length;
-  const recentOrders  = orders.slice(0, 8);
+  const recentOrders  = dashboardOrders.slice(0, 8);
+
+  const removeFromDashboard = async (order) => {
+    if (!window.confirm(`Remove #${order.id.slice(0, 8).toUpperCase()} from this dashboard? It will remain available in Orders.`)) return;
+    try {
+      await updateDoc(doc(db, 'orders', order.id), {
+        dashboardHidden: true,
+        dashboardHiddenAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Could not remove order from dashboard:', error);
+      window.alert('Could not remove this order from the dashboard. Please try again.');
+    }
+  };
 
   const soldMap = {};
-  orders.forEach(o => o.items?.forEach(i => {
+  dashboardOrders.forEach(o => o.items?.forEach(i => {
     soldMap[i.name] = (soldMap[i.name] || 0) + i.qty;
   }));
   const topProducts = Object.entries(soldMap).sort((a,b) => b[1]-a[1]).slice(0, 5);
 
   const STATS = [
     { label: 'Total Products', value: totalProducts,                              icon: Package,    color: '#6c63ff' },
-    { label: 'Total Orders',   value: orders.length,                              icon: ShoppingBag,color: '#2d6a4f' },
+    { label: 'Total Orders',   value: dashboardOrders.length,                     icon: ShoppingBag,color: '#2d6a4f' },
     { label: 'Items Sold',     value: totalItems,                                 icon: TrendingUp, color: '#C9A84C' },
     { label: 'Revenue',        value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: IndianRupee, color: '#1a1a1a' },
   ];
@@ -75,7 +89,7 @@ export default function Dashboard() {
             : (
               <table className="orders-table">
                 <thead>
-                  <tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr>
+                  <tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th aria-label="Actions"></th></tr>
                 </thead>
                 <tbody>
                   {recentOrders.map(o => (
@@ -86,6 +100,11 @@ export default function Dashboard() {
                       <td>₹{(o.total||0).toLocaleString('en-IN')}</td>
                       <td><span className={`badge badge-${o.status === 'completed' ? 'green' : o.status === 'cancelled' ? 'gray' : 'gold'}`}>{o.status || 'pending'}</span></td>
                       <td className="order-date">{o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '—'}</td>
+                      <td className="dashboard-order-actions">
+                        <button type="button" className="remove-dashboard-order" onClick={() => removeFromDashboard(o)} title="Remove from dashboard" aria-label={`Remove order #${o.id.slice(0, 8).toUpperCase()} from dashboard`}>
+                          <X size={15} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
