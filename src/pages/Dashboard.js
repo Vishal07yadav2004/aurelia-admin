@@ -2,22 +2,31 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../firebase/config';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { Package, ShoppingBag, TrendingUp, IndianRupee } from 'lucide-react';
+import PageSkeleton from '../components/PageSkeleton';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [orders,   setOrders]   = useState([]);
+  const [loaded, setLoaded] = useState({ products: false, orders: false });
 
   useEffect(() => {
-    const unsubP = onSnapshot(collection(db, 'products'), snap =>
-      setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    );
+    const unsubP = onSnapshot(collection(db, 'products'), snap => {
+      setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoaded(state => ({ ...state, products: true }));
+    }, () => setLoaded(state => ({ ...state, products: true })));
     const unsubO = onSnapshot(
       query(collection(db, 'orders'), orderBy('createdAt', 'desc')),
-      snap => setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      snap => {
+        setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLoaded(state => ({ ...state, orders: true }));
+      },
+      () => setLoaded(state => ({ ...state, orders: true }))
     );
     return () => { unsubP(); unsubO(); };
   }, []);
+
+  if (!loaded.products || !loaded.orders) return <PageSkeleton variant="dashboard" />;
 
   const totalRevenue  = orders.reduce((s, o) => s + (o.total || 0), 0);
   const totalItems    = orders.reduce((s, o) => s + (o.items?.reduce((a,i) => a + i.qty, 0) || 0), 0);

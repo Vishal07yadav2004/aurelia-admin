@@ -12,6 +12,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { ToastContext } from '../App';
+import PageSkeleton from '../components/PageSkeleton';
 import './OrdersPage.css';
 
 const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'completed', 'cancelled'];
@@ -54,12 +55,14 @@ export default function OrdersPage() {
   const [busyId, setBusyId] = useState('');
   const [upiForm, setUpiForm] = useState({ upiId: '', upiName: 'KANYAMAA' });
   const [savingUpi, setSavingUpi] = useState(false);
+  const [loaded, setLoaded] = useState({ orders: false, pending: false, payment: false });
 
   useEffect(() => {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, snap => {
       setOrders(snap.docs.map(d => ({ id: d.id, source: 'orders', approved: true, ...d.data() })));
-    });
+      setLoaded(state => ({ ...state, orders: true }));
+    }, () => setLoaded(state => ({ ...state, orders: true })));
     return () => unsub();
   }, []);
 
@@ -67,7 +70,8 @@ export default function OrdersPage() {
     const q = query(collection(db, 'pendingOrders'), orderBy('createdAt', 'desc'));
     const unsub = onSnapshot(q, snap => {
       setPendingOrders(snap.docs.map(d => ({ id: d.id, source: 'pendingOrders', approved: false, ...d.data() })));
-    });
+      setLoaded(state => ({ ...state, pending: true }));
+    }, () => setLoaded(state => ({ ...state, pending: true })));
     return () => unsub();
   }, []);
 
@@ -80,9 +84,12 @@ export default function OrdersPage() {
           upiName: data.upiName || 'KANYAMAA',
         });
       }
-    });
+      setLoaded(state => ({ ...state, payment: true }));
+    }, () => setLoaded(state => ({ ...state, payment: true })));
     return () => unsub();
   }, []);
+
+  if (!loaded.orders || !loaded.pending || !loaded.payment) return <PageSkeleton />;
 
   const allOrders = [...pendingOrders, ...orders].sort((a, b) => {
     const at = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;

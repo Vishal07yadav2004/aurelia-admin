@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Image, Play, FileText, ShoppingBag,
-  Link, Tag, LogOut, Monitor, Ticket, Layers, Megaphone
+  Link, Tag, LogOut, Monitor, Ticket, Layers, Megaphone, X
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -42,6 +42,9 @@ export default function Sidebar({ onLogout }) {
         <div className="sidebar-logo">
           <span className="logo-text">KANYAMAA</span>
           <span className="logo-tag">Admin</span>
+          <button className="sidebar-close-btn" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <X size={18} strokeWidth={2} />
+          </button>
         </div>
         <nav className="sidebar-nav">
           {NAV.map(({ to, icon: Icon, label }) => (

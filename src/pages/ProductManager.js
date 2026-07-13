@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { ToastContext } from '../App';
 import ImageDropzone from '../components/ImageDropzone';
+import PageSkeleton from '../components/PageSkeleton';
 import { getSizeConfig } from '../data/sizeConfig';
 import './ProductManager.css';
 
@@ -64,6 +65,7 @@ export default function ProductManager() {
   const [filter, setFilter]         = useState('all');
   const [editId, setEditId]         = useState(null);
   const [loading, setLoading]       = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [activeFormTab, setActiveFormTab] = useState('basic');
   const [newCustomSize, setNewCustomSize] = useState('');
   const [nextProductNum, setNextProductNum] = useState(1);
@@ -83,9 +85,11 @@ export default function ProductManager() {
         .map(p => p.productNum)
         .filter(n => typeof n === 'number');
       setNextProductNum(nums.length > 0 ? Math.max(...nums) + 1 : 1);
+      setInitialLoading(false);
     }, (err) => {
       console.error('Products error:', err);
       setProducts([]);
+      setInitialLoading(false);
     });
     return () => unsub();
   }, []);
@@ -119,6 +123,8 @@ export default function ProductManager() {
     const fromFallback = FALLBACK_SUBCATS[catId.toLowerCase()] || [];
     return [...new Set([...fromFB, ...fromFallback])];
   };
+
+  if (initialLoading) return <PageSkeleton variant="form" />;
 
   const handleCategoryChange = (catId) => {
     setForm(f => ({ ...f, category: catId, subCategories: [], sizeStock: {}, customSizes: [] }));
