@@ -6,6 +6,11 @@ const admin = require('firebase-admin');
 
 function initAdmin() {
   if (admin.apps.length) return;
+  const pk = process.env.FIREBASE_PRIVATE_KEY;
+console.log('PK starts with:', pk?.slice(0, 30));
+console.log('PK ends with:', pk?.slice(-30));
+console.log('PK contains literal \\n:', pk?.includes('\\n'));
+console.log('PK contains real newline:', pk?.includes('\n'));
 
   console.log("FIREBASE_PROJECT_ID:", process.env.FIREBASE_PROJECT_ID);
   console.log("FIREBASE_CLIENT_EMAIL:", process.env.FIREBASE_CLIENT_EMAIL);
