@@ -68,7 +68,7 @@ function smtpCommand(socket, command, expectedCodes = ['250']) {
   });
 }
 
-async function sendGmail({ to, subject, html, text }) {
+async function sendGmail({ to, subject, html, text, inReplyTo }) {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
   const fromName = process.env.GMAIL_FROM_NAME || 'KANYAMAA';
@@ -96,10 +96,14 @@ async function sendGmail({ to, subject, html, text }) {
     await smtpCommand(socket, 'DATA', ['354']);
 
     const boundary = `kanyamaa_${Date.now()}`;
+    const domain = (user.split('@')[1] || 'kanyamaa.com').replace(/[^a-zA-Z0-9.-]/g, '');
+    const messageId = `<kanyamaa-${Date.now()}-${Math.random().toString(36).slice(2)}@${domain}>`;
     const message = [
       `From: ${fromName.replace(/[\r\n]/g, ' ')} <${user}>`,
       `To: ${cleanTo}`,
       `Subject: ${subject.replace(/[\r\n]/g, ' ')}`,
+      `Message-ID: ${messageId}`,
+      ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`, `References: ${inReplyTo}`] : []),
       'MIME-Version: 1.0',
       `Content-Type: multipart/alternative; boundary="${boundary}"`,
       '',
@@ -120,6 +124,7 @@ async function sendGmail({ to, subject, html, text }) {
 
     await smtpCommand(socket, message);
     await smtpCommand(socket, 'QUIT', ['221']);
+    return { messageId };
   } finally {
     socket.end();
   }
@@ -144,12 +149,13 @@ function verifiedEmail(order) {
   const deliveryDays = process.env.DEFAULT_DELIVERY_DAYS || '5–7';
   return {
     subject: `Your KANYAMAA order ${displayOrderId(order)} is verified`,
-    text: `Hi ${fullName(order.customer)}, your order ${displayOrderId(order)} is verified and will be delivered in ${deliveryDays} business days.`,
+    text: `Hi ${fullName(order.customer)}, your order ${displayOrderId(order)} is verified and will be delivered in ${deliveryDays} business days. You may cancel within 1 day for a full refund. Once the item has shipped, it can no longer be cancelled.`,
     html: `
       <div style="font-family:Arial,sans-serif;color:#222;line-height:1.6;">
         <h2>Your order is verified ✨</h2>
         <p>Hi ${fullName(order.customer)},</p>
         <p>Your payment for <strong>${displayOrderId(order)}</strong> has been verified. Your order will be delivered in approximately <strong>${deliveryDays} business days</strong>.</p>
+        <p><strong>Cancellation window:</strong> You may cancel this order within 1 day for a full refund. Once the item has shipped, it can no longer be cancelled.</p>
         <table style="width:100%;border-collapse:collapse;margin:18px 0;">
           <thead><tr><th align="left">Product</th><th>Qty</th><th align="right">Amount</th></tr></thead>
           <tbody>${itemsRows(order)}</tbody>
@@ -178,6 +184,14 @@ function shippedEmail(order) {
         </table>
         <p>Thank you for shopping with KANYAMAA.</p>
       </div>`,
+  };
+}
+
+function completedEmail(order) {
+  return {
+    subject: `Your KANYAMAA order ${displayOrderId(order)} is delivered`,
+    text: `Hi ${fullName(order.customer)}, your order ${displayOrderId(order)} has been completed/delivered. Thank you for shopping with KANYAMAA.`,
+    html: `<div style="font-family:Arial,sans-serif;color:#222;line-height:1.6;"><h2>Your order is delivered</h2><p>Hi ${escapeHtml(fullName(order.customer))},</p><p>Your order <strong>${escapeHtml(displayOrderId(order))}</strong> has been completed and delivered.</p><p>Thank you for shopping with KANYAMAA.</p></div>`,
   };
 }
 
@@ -238,10 +252,10 @@ exports.handler = async (event) => {
     const { type, order } = JSON.parse(event.body || '{}');
     if (!order?.customer?.email) return { statusCode: 400, body: JSON.stringify({ error: 'Customer email missing' }) };
 
-    const email = type === 'shipped' ? shippedEmail(order) : type === 'rejected' ? rejectedEmail(order) : verifiedEmail(order);
-    await sendGmail({ to: order.customer.email, ...email });
+    const email = type === 'shipped' ? shippedEmail(order) : type === 'completed' ? completedEmail(order) : type === 'rejected' ? rejectedEmail(order) : verifiedEmail(order);
+    const result = await sendGmail({ to: order.customer.email, ...email, inReplyTo: order.emailThreadMessageId });
 
-    return { statusCode: 200, body: JSON.stringify({ ok: true }) };
+    return { statusCode: 200, body: JSON.stringify({ ok: true, threadMessageId: order.emailThreadMessageId || result.messageId }) };
   } catch (err) {
     console.error('send-order-email failed:', err);
     return { statusCode: 500, body: JSON.stringify({ error: err.message || 'Email failed' }) };

@@ -22,6 +22,7 @@ const displayId = (order) => order.visibleOrderId || (order.orderNumber ? `#${or
 const monthValue = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 const csvValue = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 const orderDate = (order) => order.createdAt?.toDate ? order.createdAt.toDate() : null;
+const EMAIL_LABELS = { verified: 'approval', rejected: 'rejection', shipped: 'shipped', completed: 'completed' };
 
 const sendOrderEmail = async (type, order) => {
   let token;
@@ -47,6 +48,7 @@ const sendOrderEmail = async (type, order) => {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Email failed');
+  return data;
 };
 export default function OrdersPage() {
   const { showToast } = useContext(ToastContext);
@@ -129,22 +131,42 @@ export default function OrdersPage() {
       });
 
       try {
-        await sendOrderEmail('shipped', updatedOrder);
+        const email = await sendOrderEmail('shipped', updatedOrder);
+        await updateDoc(doc(db, 'orders', order.id), {
+          emailNotifications: { ...(order.emailNotifications || {}), shipped: { sent: true, sentAt: new Date().toISOString() } },
+          emailThreadMessageId: email.threadMessageId || order.emailThreadMessageId || '',
+        });
         showToast('Order shipped + email sent ✓');
       } catch (err) {
         console.error(err);
+        await updateDoc(doc(db, 'orders', order.id), { emailNotifications: { ...(order.emailNotifications || {}), shipped: { sent: false, failedAt: new Date().toISOString(), error: err.message } } });
         showToast(`Status saved, but email failed: ${err.message}`, 'error');
       }
       return;
     }
 
+    if (status === 'completed') {
+      await updateDoc(doc(db, 'orders', order.id), { status, updatedAt: serverTimestamp() });
+      try {
+        await sendOrderEmail('completed', { ...order, status: 'completed' });
+        await updateDoc(doc(db, 'orders', order.id), {
+          emailNotifications: { ...(order.emailNotifications || {}), completed: { sent: true, sentAt: new Date().toISOString() } },
+        });
+        showToast('Order completed and email sent');
+      } catch (err) {
+        console.error(err);
+        await updateDoc(doc(db, 'orders', order.id), { emailNotifications: { ...(order.emailNotifications || {}), completed: { sent: false, failedAt: new Date().toISOString(), error: err.message } } });
+        showToast(`Status saved, but email failed: ${err.message}`, 'error');
+      }
+      return;
+    }
     await updateDoc(doc(db, 'orders', order.id), { status, updatedAt: serverTimestamp() });
     showToast(`Order status → ${status} ✓`);
   };
 
   const approveOrder = async (order) => {
-    if (!order.paymentProof?.utr || !order.paymentProof?.screenshotDataUrl) {
-      showToast('UTR and screenshot are required before approval', 'error');
+    if (!order.paymentProof?.utr && !order.paymentProof?.screenshotDataUrl) {
+      showToast('Provide either a UTR number or a payment screenshot before approval', 'error');
       return;
     }
 
@@ -181,10 +203,15 @@ export default function OrdersPage() {
       await deleteDoc(doc(db, 'pendingOrders', order.id));
 
       try {
-        await sendOrderEmail('verified', approvedOrder);
+        const email = await sendOrderEmail('verified', approvedOrder);
+        await updateDoc(doc(db, 'orders', orderNumber), {
+          emailNotifications: { verified: { sent: true, sentAt: new Date().toISOString() } },
+          emailThreadMessageId: email.threadMessageId || '',
+        });
         showToast(`${displayId(order)} approved + email sent ✓`);
       } catch (err) {
         console.error(err);
+        await updateDoc(doc(db, 'orders', orderNumber), { emailNotifications: { verified: { sent: false, failedAt: new Date().toISOString(), error: err.message } } });
         showToast(`Approved, but email failed: ${err.message}`, 'error');
       }
     } catch (err) {
@@ -219,9 +246,11 @@ export default function OrdersPage() {
       });
       try {
         await sendOrderEmail('rejected', rejectedOrder);
+        await updateDoc(doc(db, 'pendingOrders', order.id), { emailNotifications: { ...(order.emailNotifications || {}), rejected: { sent: true, sentAt: new Date().toISOString() } } });
         showToast(`${displayId(order)} rejected + email sent ✓`);
       } catch (emailError) {
         console.error(emailError);
+        await updateDoc(doc(db, 'pendingOrders', order.id), { emailNotifications: { ...(order.emailNotifications || {}), rejected: { sent: false, failedAt: new Date().toISOString(), error: emailError.message } } });
         showToast(`Order rejected, but email failed: ${emailError.message}`, 'error');
       }
     } catch (err) {
@@ -264,16 +293,16 @@ export default function OrdersPage() {
       const date = orderDate(order);
       return date && date.getFullYear() === year && date.getMonth() + 1 === month;
     });
-    const headers = ['Order ID', 'Order Date', 'Status', 'Payment Status', 'Customer Name', 'Email', 'Phone', 'Shipping Address', 'Items Bought', 'Item Quantity', 'Order Amount', 'Amount Paid', 'UTR', 'Coupon', 'Rejection Reason'];
+    const headers = ['Order ID', 'Order Date', 'Status', 'Rejection Reason', 'Customer Name', 'Email', 'Phone', 'Shipping Address', 'Items Bought', 'Item Quantity', 'Order Amount', 'Amount Paid', 'UTR', 'Coupon'];
     const rows = monthOrders.map(order => {
       const items = order.items || [];
       const address = order.shippingAddress || {};
       return [
-        displayId(order), orderDate(order)?.toLocaleDateString('en-IN') || '', order.status || 'payment pending', order.paymentStatus || 'pending',
+        displayId(order), orderDate(order)?.toLocaleDateString('en-IN') || '', order.status || 'payment pending', order.rejectionReason,
         `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim(), order.customer?.email, order.customer?.phone,
         [address.address, address.apartment, address.city, address.state, address.zip].filter(Boolean).join(', '),
         items.map(item => `${item.name || 'Item'} x${item.qty || 0}`).join('; '), items.reduce((total, item) => total + Number(item.qty || 0), 0),
-        Number(order.payableAmount || order.total || 0), Number(order.paymentProof?.amountPaid || 0), order.paymentProof?.utr, order.couponCode, order.rejectionReason,
+        Number(order.payableAmount || order.total || 0), Number(order.paymentProof?.amountPaid || 0), order.paymentProof?.utr, order.couponCode,
       ];
     });
     const csv = [headers, ...rows].map(row => row.map(csvValue).join(',')).join('\r\n');
@@ -487,6 +516,11 @@ export default function OrdersPage() {
                             {order.paymentProof?.utr && <p className="order-detail-line">UTR: <strong>{order.paymentProof.utr}</strong></p>}
                             {order.shippingTracking?.courierName && <p className="order-detail-line">Courier: <strong>{order.shippingTracking.courierName}</strong></p>}
                             {order.shippingTracking?.trackingNumber && <p className="order-detail-line">Tracking ID: <strong>{order.shippingTracking.trackingNumber}</strong></p>}
+                            {Object.entries(order.emailNotifications || {}).map(([type, notification]) => (
+                              <p className="order-detail-line" key={type} style={{ color: notification.sent ? '#1f6b46' : '#c0392b' }}>
+                                {notification.sent ? `Email sent for ${EMAIL_LABELS[type] || type}` : `Email not sent for ${EMAIL_LABELS[type] || type}`}
+                              </p>
+                            ))}
                             {order.couponCode && <p className="order-detail-line">Coupon: {order.couponCode}</p>}
                             {order.notes && <p className="order-detail-line" style={{ fontStyle: 'italic' }}>"{order.notes}"</p>}
                             {order.rejectionReason && <p className="order-detail-line rejection-reason"><strong>Rejection reason:</strong> {order.rejectionReason}</p>}

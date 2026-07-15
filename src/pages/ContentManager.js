@@ -633,6 +633,76 @@ function BadgesTab({ products }) {
 }
 
 /* ────────── MAIN COMPONENT ────────── */
+function ShippingChargesTab({ products }) {
+  const { showToast } = useContext(ToastContext);
+  const [selected, setSelected] = useState(null);
+  const [charge, setCharge] = useState('0');
+  const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!selected) return undefined;
+    return onSnapshot(doc(db, 'productShippingCharges', String(selected.id)), snap => {
+      setCharge(String(snap.exists() ? Number(snap.data().charge || 0) : 0));
+    }, () => setCharge('0'));
+  }, [selected?.id]);
+
+  const readCharge = () => {
+    const value = Number(charge);
+    if (!Number.isFinite(value) || value < 0) {
+      showToast('Shipping charge must be zero or more', 'error');
+      return null;
+    }
+    return value;
+  };
+  const save = async () => {
+    if (!selected) return showToast('Select a product first', 'error');
+    const value = readCharge();
+    if (value === null) return;
+    setSaving(true);
+    try {
+      await setDoc(doc(db, 'productShippingCharges', String(selected.id)), { charge: value });
+      showToast('Shipping charge saved');
+    } catch (err) {
+      console.error(err);
+      showToast('Could not save shipping charge', 'error');
+    }
+    setSaving(false);
+  };
+  const applyToAll = async () => {
+    if (!selected) return;
+    const value = readCharge();
+    if (value === null) return;
+    const uniqueProducts = Array.from(new Map(products.map(product => [String(product.id), product])).values());
+    if (!window.confirm(`Apply a Rs. ${value} shipping charge to all ${uniqueProducts.length} products?`)) return;
+    setSaving(true);
+    try {
+      for (let start = 0; start < uniqueProducts.length; start += 500) {
+        const batch = writeBatch(db);
+        uniqueProducts.slice(start, start + 500).forEach(product => batch.set(doc(db, 'productShippingCharges', String(product.id)), { charge: value }));
+        await batch.commit();
+      }
+      showToast(`Shipping charge applied to ${uniqueProducts.length} products`);
+    } catch (err) {
+      console.error(err);
+      showToast('Could not apply shipping charge to all products', 'error');
+    }
+    setSaving(false);
+  };
+  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  return <div className="desc-layout">
+    <div className="card product-picker">
+      <p className="picker-title">Select Product</p>
+      <p className="picker-sub">Set a charge for one product, or apply it to every product.</p>
+      <input className="field-input picker-search" placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="product-pick-list">{filteredProducts.map(p => <div key={p.id} className={`pick-item ${selected?.id === p.id ? 'active' : ''}`} onClick={() => setSelected(p)}><div className="pick-img">{p.image && <img src={p.image} alt={p.name} />}</div><div className="pick-info"><p className="pick-name">{p.name}</p><p className="pick-price">Rs. {(p.price || 0).toLocaleString('en-IN')}</p></div></div>)}</div>
+    </div>
+    <div className="card desc-editor">
+      {!selected ? <div className="desc-no-selection"><p>No product selected</p><span>Pick a product to edit its shipping charge</span></div> : <><p className="desc-editor-title">{selected.name}</p><p className="desc-editor-sub">This amount is stored per product. Set 0 for free shipping.</p><div className="form-field" style={{ maxWidth: 280 }}><label className="field-label">Shipping Charge</label><input className="field-input" type="number" min="0" step="1" value={charge} onChange={e => setCharge(e.target.value)} /></div><div className="desc-actions"><button className="btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save Charge'}</button><button className="btn-secondary" onClick={applyToAll} disabled={saving}>Apply to All Products</button></div></>}
+    </div>
+  </div>;
+}
+
 export default function ContentManager() {
   const [tab, setTab] = useState('descriptions');
   const [allProds, setAllProds] = useState(allProducts);
@@ -672,11 +742,15 @@ export default function ContentManager() {
         <button className={`cm-tab ${tab === 'badges' ? 'active' : ''}`} onClick={() => setTab('badges')}>
           Trust Badges
         </button>
+        <button className={`cm-tab ${tab === 'shippingCharges' ? 'active' : ''}`} onClick={() => setTab('shippingCharges')}>
+          Shipping Charges
+        </button>
       </div>
 
       {tab === 'descriptions' && <DescriptionsTab products={allProds} />}
       {tab === 'reviews' && <ReviewsTab />}
       {tab === 'badges' && <BadgesTab products={allProds} />}
+      {tab === 'shippingCharges' && <ShippingChargesTab products={allProds} />}
     </div>
   );
 }
