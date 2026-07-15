@@ -28,9 +28,11 @@ export default function Dashboard() {
 
   if (!loaded.products || !loaded.orders) return <PageSkeleton variant="dashboard" />;
 
+  // Hiding an order only removes it from the Recent Orders list. It must still be
+  // included in all business totals and product-sales calculations.
   const dashboardOrders = orders.filter(o => !o.dashboardHidden);
-  const totalRevenue  = dashboardOrders.reduce((s, o) => s + (o.total || 0), 0);
-  const totalItems    = dashboardOrders.reduce((s, o) => s + (o.items?.reduce((a,i) => a + i.qty, 0) || 0), 0);
+  const totalRevenue  = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalItems    = orders.reduce((s, o) => s + (o.items?.reduce((a,i) => a + i.qty, 0) || 0), 0);
   const totalProducts = products.length;
   const recentOrders  = dashboardOrders.slice(0, 8);
 
@@ -48,14 +50,14 @@ export default function Dashboard() {
   };
 
   const soldMap = {};
-  dashboardOrders.forEach(o => o.items?.forEach(i => {
+  orders.forEach(o => o.items?.forEach(i => {
     soldMap[i.name] = (soldMap[i.name] || 0) + i.qty;
   }));
   const topProducts = Object.entries(soldMap).sort((a,b) => b[1]-a[1]).slice(0, 5);
 
   const STATS = [
     { label: 'Total Products', value: totalProducts,                              icon: Package,    color: '#6c63ff' },
-    { label: 'Total Orders',   value: dashboardOrders.length,                     icon: ShoppingBag,color: '#2d6a4f' },
+    { label: 'Total Orders',   value: orders.length,                              icon: ShoppingBag,color: '#2d6a4f' },
     { label: 'Items Sold',     value: totalItems,                                 icon: TrendingUp, color: '#C9A84C' },
     { label: 'Revenue',        value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: IndianRupee, color: '#1a1a1a' },
   ];

@@ -239,7 +239,7 @@ export default function CouponManager() {
             </div>
 
             <div className="form-field">
-              <label className="field-label">Max Uses (optional)</label>
+              <label className="field-label">Max Uses Per Customer (optional)</label>
               <input
                 className="field-input"
                 type="number"
@@ -248,6 +248,7 @@ export default function CouponManager() {
                 onChange={e => setForm({ ...form, maxUses: e.target.value })}
                 placeholder="Unlimited"
               />
+              <p className="form-hint">How many times a single phone number can use this coupon. Set 1 to allow one use per customer.</p>
             </div>
           </div>
 
@@ -329,7 +330,12 @@ export default function CouponManager() {
                         Expires: {(coupon.expiresAt.toDate ? coupon.expiresAt.toDate() : new Date(coupon.expiresAt)).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </span>
                     )}
-                    {coupon.maxUses && <span>Max: {coupon.maxUses} uses</span>}
+                    {coupon.maxUses
+                      ? <span className={coupon.uses >= coupon.maxUses ? 'meta-limit-reached' : ''}>
+                          Used: {coupon.uses || 0} total · limit {coupon.maxUses}/customer
+                        </span>
+                      : (coupon.uses > 0 && <span>Used: {coupon.uses} times total</span>)
+                    }
                   </div>
                 </div>
 
@@ -363,6 +369,8 @@ export default function CouponManager() {
           <li>Customers enter the code at checkout in the "Promo code" field</li>
           <li>The code is verified securely against Firebase — <strong>never exposed in client source code</strong></li>
           <li>If the coupon is inactive, expired, or doesn't meet minimum order — it's rejected automatically</li>
+          <li><strong>Max Uses is per customer phone number</strong> — set to 1 to allow each customer to use it only once. Usage is tracked in <code>couponRedemptions</code> by phone digits</li>
+          <li>If a customer tries to reuse a coupon beyond their limit, they'll see "You have already used this coupon to its limit"</li>
           <li>You can deactivate a coupon anytime without deleting it (pause/resume)</li>
           <li>The document ID in Firestore = the coupon code (case-insensitive on client side)</li>
         </ul>

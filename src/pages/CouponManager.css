@@ -265,6 +265,10 @@
   font-size: 11px;
   color: #aaa;
 }
+.coupon-card-meta .meta-limit-reached {
+  color: #e74c3c;
+  font-weight: 600;
+}
 
 .coupon-card-right {
   display: flex;

@@ -297,7 +297,7 @@ export default function OrdersPage() {
       const date = orderDate(order);
       return date && date.getFullYear() === year && date.getMonth() + 1 === month;
     });
-    const headers = ['Order ID', 'Order Date', 'Status', 'Rejection Reason', 'Customer Name', 'Email', 'Phone', 'Shipping Address', 'Items Bought', 'Item Quantity', 'Order Amount', 'Amount Paid', 'UTR', 'Coupon'];
+    const headers = ['Order ID', 'Order Date', 'Status', 'Rejection Reason', 'Customer Name', 'Email', 'Phone', 'Shipping Address', 'Items Bought', 'Item Quantity', 'Subtotal', 'Discount', 'Shipping Charge', 'Tax', 'Final Payable Amount', 'Amount Paid', 'UTR', 'Coupon'];
     const rows = monthOrders.map(order => {
       const items = order.items || [];
       const address = order.shippingAddress || {};
@@ -306,6 +306,7 @@ export default function OrdersPage() {
         `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim(), order.customer?.email, order.customer?.phone,
         [address.address, address.apartment, address.city, address.state, address.zip].filter(Boolean).join(', '),
         items.map(item => `${item.name || 'Item'} x${item.qty || 0}`).join('; '), items.reduce((total, item) => total + Number(item.qty || 0), 0),
+        Number(order.subtotal || 0), Number(order.discount || 0), Number(order.shipping || 0), Number(order.tax || 0),
         Number(order.payableAmount || order.total || 0), Number(order.paymentProof?.amountPaid || 0), order.paymentProof?.utr, order.couponCode,
       ];
     });
