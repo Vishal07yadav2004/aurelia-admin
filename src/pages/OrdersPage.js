@@ -135,6 +135,7 @@ export default function OrdersPage() {
         await updateDoc(doc(db, 'orders', order.id), {
           emailNotifications: { ...(order.emailNotifications || {}), shipped: { sent: true, sentAt: new Date().toISOString() } },
           emailThreadMessageId: email.threadMessageId || order.emailThreadMessageId || '',
+          emailThreadSubject: email.threadSubject || order.emailThreadSubject || '',
         });
         showToast('Order shipped + email sent ✓');
       } catch (err) {
@@ -148,9 +149,11 @@ export default function OrdersPage() {
     if (status === 'completed') {
       await updateDoc(doc(db, 'orders', order.id), { status, updatedAt: serverTimestamp() });
       try {
-        await sendOrderEmail('completed', { ...order, status: 'completed' });
+        const email = await sendOrderEmail('completed', { ...order, status: 'completed' });
         await updateDoc(doc(db, 'orders', order.id), {
           emailNotifications: { ...(order.emailNotifications || {}), completed: { sent: true, sentAt: new Date().toISOString() } },
+          emailThreadMessageId: email.threadMessageId || order.emailThreadMessageId || '',
+          emailThreadSubject: email.threadSubject || order.emailThreadSubject || '',
         });
         showToast('Order completed and email sent');
       } catch (err) {
@@ -207,6 +210,7 @@ export default function OrdersPage() {
         await updateDoc(doc(db, 'orders', orderNumber), {
           emailNotifications: { verified: { sent: true, sentAt: new Date().toISOString() } },
           emailThreadMessageId: email.threadMessageId || '',
+          emailThreadSubject: email.threadSubject || '',
         });
         showToast(`${displayId(order)} approved + email sent ✓`);
       } catch (err) {

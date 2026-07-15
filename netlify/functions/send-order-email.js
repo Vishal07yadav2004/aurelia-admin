@@ -253,9 +253,11 @@ exports.handler = async (event) => {
     if (!order?.customer?.email) return { statusCode: 400, body: JSON.stringify({ error: 'Customer email missing' }) };
 
     const email = type === 'shipped' ? shippedEmail(order) : type === 'completed' ? completedEmail(order) : type === 'rejected' ? rejectedEmail(order) : verifiedEmail(order);
-    const result = await sendGmail({ to: order.customer.email, ...email, inReplyTo: order.emailThreadMessageId });
+    // Gmail needs both matching reply headers and the original subject to reliably group messages.
+    const threadSubject = order.emailThreadSubject || (type === 'rejected' ? email.subject : verifiedEmail(order).subject);
+    const result = await sendGmail({ to: order.customer.email, ...email, subject: threadSubject, inReplyTo: order.emailThreadMessageId });
 
-    return { statusCode: 200, body: JSON.stringify({ ok: true, threadMessageId: order.emailThreadMessageId || result.messageId }) };
+    return { statusCode: 200, body: JSON.stringify({ ok: true, threadMessageId: order.emailThreadMessageId || result.messageId, threadSubject }) };
   } catch (err) {
     console.error('send-order-email failed:', err);
     return { statusCode: 500, body: JSON.stringify({ error: err.message || 'Email failed' }) };
