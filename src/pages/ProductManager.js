@@ -243,6 +243,21 @@ export default function ProductManager() {
       showToast('Fill all required fields and add at least one image', 'error'); return;
     }
 
+    // Product name must contain at least one letter (not purely numeric)
+    if (!/[a-zA-Z]/.test(form.name)) {
+      showToast('Product name must contain at least one letter', 'error'); return;
+    }
+
+    // Price must be a positive number
+    if (Number(form.price) <= 0) {
+      showToast('Price must be greater than 0', 'error'); return;
+    }
+
+    // Sale price must also be positive if enabled
+    if (form.saleEnabled && form.salePrice && Number(form.salePrice) <= 0) {
+      showToast('Sale price must be greater than 0', 'error'); return;
+    }
+
     setLoading(true);
     try {
       // Resolve productNum for edit vs new
@@ -443,8 +458,13 @@ export default function ProductManager() {
                 </div>
                 <div className="form-field">
                   <label className="field-label">Price (₹) *</label>
-                  <input className="field-input" type="number" placeholder="e.g. 1299"
-                    value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+                  <input className="field-input" type="number" placeholder="e.g. 1299" min="1"
+                    value={form.price}
+                    onChange={e => {
+                      const val = e.target.value;
+                      // Prevent negative values from being typed
+                      if (val === '' || Number(val) >= 0) setForm({ ...form, price: val });
+                    }} />
                 </div>
                 <div className="form-field">
                   <label className="field-label">Quantity / Stock</label>
@@ -908,8 +928,11 @@ export default function ProductManager() {
                   </div>
                   <div className="form-field">
                     <label className="field-label">Sale Price (₹) *</label>
-                    <input className="field-input" type="number" value={form.salePrice}
-                      onChange={e => setForm({ ...form, salePrice: e.target.value })} />
+                    <input className="field-input" type="number" min="1" value={form.salePrice}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '' || Number(val) >= 0) setForm({ ...form, salePrice: val });
+                      }} />
                   </div>
                 </div>
               )}
